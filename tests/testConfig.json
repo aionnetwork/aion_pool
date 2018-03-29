@@ -1,0 +1,7 @@
+{
+  "miner1": "<<minerAddress1>>",
+  "miner1Threads": "2",
+  "miner2": "<<minerAddress2>>",
+  "miner2Threads": "1",
+  "aionminerCpuLocation": "<<cpuMinerLocation>> (e.g. /home/alin/Workspace/aionminer-cpu)"
+}

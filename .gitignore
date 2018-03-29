@@ -1,0 +1,8 @@
+node_modules/*
+local_modules/**/build/*
+.idea/**
+npm-debug.log
+redis/
+node/
+release/
+package-lock.json
