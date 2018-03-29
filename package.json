@@ -1,0 +1,49 @@
+{
+    "name": "aion-mining-pool",
+    "version": "0.1.9",
+    "description": "pool",
+    "keywords": [
+        "stratum",
+        "mining",
+        "pool",
+        "server",
+        "poolserver",
+        "aion"
+    ],
+    "license": "GPL-2.0",
+    "author": "ross",
+    "main": "init.js",
+    "bin": {
+        "block-notify": "./scripts/blockNotify.js"
+    },
+    "dependencies": {
+        "async": "*",
+        "bignum": "*",
+        "bindings": "*",
+        "blake2": "file:local_modules/node-blake2",
+        "body-parser": "*",
+        "colors": "*",
+        "compression": "*",
+        "dateformat": "*",
+        "dot": "*",
+        "equihashverify": "file:local_modules/equihashverify",
+        "express": "*",
+        "extend": "*",
+        "moment": "^2.20.1",
+        "mysql": "*",
+        "node-watch": "*",
+        "nonce": "*",
+        "redis": "*",
+        "request": "*",
+        "stratum-pool": "file:local_modules/stratum-pool"
+    },
+    "devDependencies": {
+        "gulp": "^3.9.1",
+        "gulp-gzip": "*",
+        "gulp-tar": "*",
+        "moment": "*"
+    },
+    "scripts": {
+        "start": "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PWD/node_modules/stratum-pool/node_modules/equihashverify/build/Release/:$PWD/node_modules/equihashverify/build/Release/ node $NODE_DEBUG_OPTION init.js"
+    }
+}
