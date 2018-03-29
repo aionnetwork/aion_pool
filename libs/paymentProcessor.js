@@ -19,19 +19,19 @@ module.exports = function (logger) {
             callback(setupResults);
         });
     }, function (coins) {
-        coins.forEach(function (coin) {
-
-            let poolOptions = poolConfigs[coin];
-            let processingConfig = poolOptions.paymentProcessing;
-            let logSystem = 'Payments';
-            let logComponent = coin;
-
-            logger.debug(logSystem, logComponent, 'Payment processing setup to run every '
-                + processingConfig.paymentInterval + ' second(s) with daemon ('
-                + processingConfig.daemon.user + '@' + processingConfig.daemon.host + ':' + processingConfig.daemon.port
-                + ') and redis (' + poolOptions.redis.host + ':' + poolOptions.redis.port + ')');
-
-        });
+        // coins.forEach(function (coin) {
+        //
+        //     let poolOptions = poolConfigs[coin];
+        //     let processingConfig = poolOptions.paymentProcessing;
+        //     let logSystem = 'Payments';
+        //     let logComponent = coin;
+        //
+        //     logger.debug(logSystem, logComponent, 'Payment processing setup to run every '
+        //         + processingConfig.paymentInterval + ' second(s) with daemon ('
+        //         + processingConfig.daemon.user + '@' + processingConfig.daemon.host + ':' + processingConfig.daemon.port
+        //         + ') and redis (' + poolOptions.redis.host + ':' + poolOptions.redis.port + ')');
+        //
+        // });
     });
 };
 
