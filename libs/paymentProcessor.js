@@ -7,12 +7,12 @@ const util = require('stratum-pool/lib/util.js');
 module.exports = function (logger) {
 
     const poolConfigs = JSON.parse(process.env.pools);
-    let enabledPools = []
+    let enabledPools = [];
     Object.keys(poolConfigs).forEach((coin) => {
         let poolOptions = poolConfigs[coin];
         if (poolOptions.paymentProcessing && poolOptions.paymentProcessing.enabled)
             enabledPools.push(coin)
-    })
+    });
 
     async.filter(enabledPools, function (coin, callback) {
         SetupForPool(logger, poolConfigs[coin], function (setupResults) {
@@ -92,7 +92,7 @@ function SetupForPool(logger, poolOptions, setupFinished) {
                     callback();
                 }
                 catch (e) {
-                    logger.error(logSystem, logComponent, 'Error detecting number of satoshis in a coin, cannot do payment processing. Tried parsing: ' + result.data);
+                    logger.error(logSystem, logComponent, 'Error detecting number of wei in a coin, cannot do payment processing. Tried parsing: ' + result.data);
                     callback(true);
                 }
 
@@ -115,15 +115,15 @@ function SetupForPool(logger, poolOptions, setupFinished) {
     });
 
 
-    let satoshisToCoins = function (satoshis) {
-        return parseFloat((satoshis / magnitude).toFixed(coinPrecision));
+    let weiToCoins = function (wei) {
+        return parseFloat((wei / magnitude).toFixed(coinPrecision));
     };
 
-    let coinsToSatoshies = function (coins) {
+    let coinsToWei = function (coins) {
         return coins * magnitude;
     };
 
-    /* Deal with numbers in smallest possible units (satoshis) as much as possible. This greatly helps with accuracy
+    /* Deal with numbers in smallest possible units (wei) as much as possible. This greatly helps with accuracy
        when rounding and whatnot. When we are storing numbers for only humans to see, store in whole coin units. */
 
     let processPayments = function () {
@@ -171,7 +171,7 @@ function SetupForPool(logger, poolOptions, setupFinished) {
 
                     let workers = {};
                     for (let w in results[0]) {
-                        workers[w] = {balance: coinsToSatoshies(parseFloat(results[0][w]))};
+                        workers[w] = {balance: coinsToWei(parseFloat(results[0][w]))};
                     }
 
                     let rounds = results[1].map(function (r) {
@@ -332,7 +332,7 @@ function SetupForPool(logger, poolOptions, setupFinished) {
              Get balance different for each address and pass it along as object of latest balances such as
              {worker1: balance1, worker2, balance2}
              when deciding the sent balance, it the difference should be -1*amount they had in db,
-             if not sending the balance, the differnce should be +(the amount they earned this round)
+             if not sending the balance, the difference should be +(the amount they earned this round)
              */
             function (workers, rounds, callback) {
 
@@ -349,7 +349,7 @@ function SetupForPool(logger, poolOptions, setupFinished) {
                         if (toSend >= minPaymentWei) {
                             totalSent += toSend;
                             let address = worker.address = (worker.address || getProperAddress(w));
-                            worker.sent = addressAmounts[address] = satoshisToCoins(toSend);
+                            worker.sent = addressAmounts[address] = weiToCoins(toSend);
                             worker.balanceChange = Math.min(worker.balance, toSend) * -1;
                         }
                         else {
@@ -386,7 +386,7 @@ function SetupForPool(logger, poolOptions, setupFinished) {
                                         trySend(higherPercent);
                                     }
                                     else if (result.error) {
-                                        logger.error(logSystem, logComponent, 'Error trying to send payments with RPC sendmany '
+                                        logger.error(logSystem, logComponent, 'Error trying to send payments with RPC eth_sendTransaction '
                                             + JSON.stringify(result.error));
                                         callback(true);
                                     }
@@ -408,7 +408,6 @@ function SetupForPool(logger, poolOptions, setupFinished) {
                     }
                 };
                 trySend(0);
-
             },
             function (workers, rounds, callback) {
 
@@ -424,7 +423,7 @@ function SetupForPool(logger, poolOptions, setupFinished) {
                             'hincrbyfloat',
                             coin + ':balances',
                             w,
-                            satoshisToCoins(worker.balanceChange)
+                            weiToCoins(worker.balanceChange)
                         ]);
                     }
                     if (worker.sent !== 0) {
