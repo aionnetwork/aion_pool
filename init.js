@@ -430,7 +430,7 @@ var startProfitSwitch = function(){
     poolConfigs = buildPoolConfigs();
     spawnPoolWorkers();
     startPaymentProcessor();
-    // startWebsite()
+    startWebsite();
     // startProfitSwitch()
     startCliListener();
 })();
