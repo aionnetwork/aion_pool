@@ -2,11 +2,8 @@
     "enabled": true,
     "testnet": true,
     "coin": "aion.json",
-
-    "__address_aion":    "6a156bA44e87E1d621C266687eA6B63B2283cA5c",
-    "__address_bitcoin": "1AGRxqDa5WjUKBwHB9XYEjmkv1ucoUUy1s",
-    "address": "0xd0dfdb27db506e967c50d3d087d9fb0adb4657053e1caa6411b6944391b20fab",
-    "addressPassword": "<account_password>",
+    "address": "0x6571d693c49ebe2e1407968a29420f642f44112f024bddfd6c1256edf227873f",
+    "addressPassword": "alin93",
 
     "__rewardRecipients": "total in percentage is the pool fee charged, (rewardRecipients[0] + rewardRecipients[1] + ...)%",
     "reward" : 1.5,
@@ -15,9 +12,9 @@
 
     "paymentProcessing": {
         "enabled": true,
-        "paymentInterval": 20,
+        "paymentInterval": 10,
         "minimumPayment": 0,
-        "minimumConfirmationsShield": 2,
+        "minimumConfirmationsShield": 1,
         "daemon": {
             "host": "127.0.0.1",
             "__port": 19332,

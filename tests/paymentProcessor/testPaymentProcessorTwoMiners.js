@@ -3,26 +3,26 @@ let web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
 const spawn = require('child_process').spawn;
 const fs = require('fs');
 const assert = require('assert');
-const Cleanup = require('./cleanup');
+const Cleanup = require('../cleanup');
 
 const testConfig = JSON.parse(fs.readFileSync('../testConfig.json', 'utf-8'));
-let subprocess1;
-let subprocess2;
+let minerProcess1;
+let minerProcess2;
 
 let startBothMiners = () => {
     //start first miner
     let argument1 = ["-t", testConfig.miner1Threads, "-u", testConfig.miner1];
-    subprocess1 = spawn(testConfig.aionminerCpuLocation, argument1, { detached: true});
+    minerProcess1 = spawn(testConfig.aionminerCpuLocation, argument1, { detached: true});
 
-    subprocess1.on('error', function(err){
+    minerProcess1.on('error', function(err){
         console.log(err);
     });
 
     //start second miner
-    let argument2 = "-t " + testConfig.miner2Threads + " -u " + testConfig.miner2;
-    subprocess2 = spawn(testConfig.aionminerCpuLocation, [argument2], { detached: true});
+    let argument2 = ["-t", testConfig.miner2Threads, "-u", testConfig.miner2];
+    minerProcess2 = spawn(testConfig.aionminerCpuLocation, argument2, { detached: true});
 
-    subprocess2.on('error', function(err){
+    minerProcess2.on('error', function(err){
         console.log(err);
     });
 };
@@ -33,6 +33,9 @@ let verifyBothMinersGetPaidFromTimeToTime = () => {
 
     assert.notEqual(miner1StartBalance, balanceMiner1);
     assert.notEqual(miner2StartBalance, balanceMiner2);
+
+    console.log("Test success.");
+    cleanupFunction();
 };
 
 let readMinersBalanceToWei = (address) => {
@@ -50,8 +53,8 @@ setTimeout(verifyBothMinersGetPaidFromTimeToTime, 180000);
 
 let cleanupFunction = () => {
     console.log('cleaning up the processes');
-    subprocess1.kill();
-    subprocess1.kill();
+    minerProcess1.kill();
+    minerProcess1.kill();
     process.exit();
 };
 
