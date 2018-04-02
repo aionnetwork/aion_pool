@@ -338,61 +338,60 @@ function SetupForPool(logger, poolOptions, setupFinished) {
                 function (workers, rounds, callback) {
 
                     let trySend = function (withholdPercent) {
-                            const poolAddress = poolOptions.address;
-                            let addressAmounts = {};
-                            let totalSent = 0;
+                        const poolAddress = poolOptions.address;
+                        let addressAmounts = {};
+                        let totalSent = 0;
 
-                            for (let w in workers) {
-                                let worker = workers[w];
-                                worker.balance = worker.balance || 0;
-                                worker.reward = worker.reward || 0;
-                                let toSend = (worker.balance + worker.reward) * (1 - withholdPercent);
-                                if (toSend >= minPaymentWei) {
-                                    totalSent += toSend;
-                                    let address = worker.address = (worker.address || getProperAddress(w));
-                                    worker.sent = addressAmounts[address] = weiToCoins(toSend);
-                                    worker.balanceChange = Math.min(worker.balance, toSend) * -1;
-                                }
-                                else {
-                                    worker.balanceChange = Math.max(toSend - worker.balance, 0);
-                                    worker.sent = 0;
-                                }
+                        for (let w in workers) {
+                            let worker = workers[w];
+                            worker.balance = worker.balance || 0;
+                            worker.reward = worker.reward || 0;
+                            let toSend = (worker.balance + worker.reward) * (1 - withholdPercent);
+                            if (toSend >= minPaymentWei) {
+                                totalSent += toSend;
+                                let address = worker.address = (worker.address || getProperAddress(w));
+                                worker.sent = addressAmounts[address] = weiToCoins(toSend);
+                                worker.balanceChange = Math.min(worker.balance, toSend) * -1;
                             }
-
-                            if (Object.keys(addressAmounts).length === 0) {
-                                callback(null, workers, rounds);
-                                return;
+                            else {
+                                worker.balanceChange = Math.max(toSend - worker.balance, 0);
+                                worker.sent = 0;
                             }
-
-                            let sendTransactionCalls = [];
-                            for (w in workers) {
-                                let worker = workers[w];
-
-                                if (worker.address === poolAddress) {
-                                    logger.debug('Master', 'Payment processor', 'Pool has same address as worker, not sending reward');
-                                    continue;
-                                }
-
-                                let transactionData = {
-                                    from: poolAddress,
-                                    to: w,
-                                    value: worker.reward
-                                };
-
-                                sendTransactionCalls.push(sendTransactionCall(transactionData, withholdPercent, addressAmounts, totalSent, trySend));
-                            }
-
-                            async.parallel(sendTransactionCalls, function (err, transactions) {
-                                transactions.forEach(transaction => {
-                                    if (transaction.error) {
-                                        //TODO:  error management
-                                    }
-                                });
-
-                                callback(null, workers, rounds);
-                            })
                         }
-                    ;
+
+                        if (Object.keys(addressAmounts).length === 0) {
+                            callback(null, workers, rounds);
+                            return;
+                        }
+
+                        let sendTransactionCalls = [];
+                        for (w in workers) {
+                            let worker = workers[w];
+
+                            if (worker.address === poolAddress) {
+                                logger.debug('Master', 'Payment processor', 'Pool has same address as worker, not sending reward');
+                                continue;
+                            }
+
+                            let transactionData = {
+                                from: poolAddress,
+                                to: w,
+                                value: worker.reward
+                            };
+
+                            sendTransactionCalls.push(sendTransactionCall(transactionData, withholdPercent, addressAmounts, totalSent, trySend));
+                        }
+
+                        async.parallel(sendTransactionCalls, function (err, transactions) {
+                            transactions.forEach(transaction => {
+                                if (transaction.error) {
+                                    //TODO:  error management
+                                }
+                            });
+
+                            callback(null, workers, rounds);
+                        })
+                    };
                     trySend(0);
 
                 },
