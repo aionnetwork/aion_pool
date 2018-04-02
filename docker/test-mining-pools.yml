@@ -1,0 +1,27 @@
+version: '3'
+
+services:
+  mining-pool:
+    image: mining-pool
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    container_name: mining-pool1
+    links:
+      - aion-kernel
+    ports:
+      - "3009:3008"
+  mining-pool2:
+    image: mining-pool
+    container_name: mining-pool2
+    links:
+      - aion-kernel
+    ports:
+      - "3010:3008"
+  aion-kernel:
+    image: aion-kernel
+    container_name: aion-kernel
+    build: ./aion/
+    ports:
+      - "8545:8545"
+      - "19333:19333"
