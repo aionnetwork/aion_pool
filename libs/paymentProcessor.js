@@ -7,12 +7,12 @@ const util = require('stratum-pool/lib/util.js');
 module.exports = function (logger) {
 
     const poolConfigs = JSON.parse(process.env.pools);
-    let enabledPools = []
+    let enabledPools = [];
     Object.keys(poolConfigs).forEach((coin) => {
         let poolOptions = poolConfigs[coin];
         if (poolOptions.paymentProcessing && poolOptions.paymentProcessing.enabled)
             enabledPools.push(coin)
-    })
+    });
 
     async.filter(enabledPools, function (coin, callback) {
         SetupForPool(logger, poolConfigs[coin], function (setupResults) {
@@ -92,7 +92,7 @@ function SetupForPool(logger, poolOptions, setupFinished) {
                     callback();
                 }
                 catch (e) {
-                    logger.error(logSystem, logComponent, 'Error detecting number of satoshis in a coin, cannot do payment processing. Tried parsing: ' + result.data);
+                    logger.error(logSystem, logComponent, 'Error detecting number of wei in a coin, cannot do payment processing. Tried parsing: ' + result.data);
                     callback(true);
                 }
 
@@ -115,15 +115,15 @@ function SetupForPool(logger, poolOptions, setupFinished) {
     });
 
 
-    let satoshisToCoins = function (satoshis) {
-        return parseFloat((satoshis / magnitude).toFixed(coinPrecision));
+    let weiToCoins = function (wei) {
+        return parseFloat((wei / magnitude).toFixed(coinPrecision));
     };
 
-    let coinsToSatoshies = function (coins) {
+    let coinsToWei = function (coins) {
         return coins * magnitude;
     };
 
-    /* Deal with numbers in smallest possible units (satoshis) as much as possible. This greatly helps with accuracy
+    /* Deal with numbers in smallest possible units (wei) as much as possible. This greatly helps with accuracy
        when rounding and whatnot. When we are storing numbers for only humans to see, store in whole coin units. */
 
     let processPayments = function () {
@@ -171,7 +171,7 @@ function SetupForPool(logger, poolOptions, setupFinished) {
 
                     let workers = {};
                     for (let w in results[0]) {
-                        workers[w] = {balance: coinsToSatoshies(parseFloat(results[0][w]))};
+                        workers[w] = {balance: coinsToWei(parseFloat(results[0][w]))};
                     }
 
                     let rounds = results[1].map(function (r) {
@@ -332,7 +332,7 @@ function SetupForPool(logger, poolOptions, setupFinished) {
              Get balance different for each address and pass it along as object of latest balances such as
              {worker1: balance1, worker2, balance2}
              when deciding the sent balance, it the difference should be -1*amount they had in db,
-             if not sending the balance, the differnce should be +(the amount they earned this round)
+             if not sending the balance, the difference should be +(the amount they earned this round)
              */
             function (workers, rounds, callback) {
 
@@ -349,7 +349,7 @@ function SetupForPool(logger, poolOptions, setupFinished) {
                         if (toSend >= minPaymentWei) {
                             totalSent += toSend;
                             let address = worker.address = (worker.address || getProperAddress(w));
-                            worker.sent = addressAmounts[address] = satoshisToCoins(toSend);
+                            worker.sent = addressAmounts[address] = weiToCoins(toSend);
                             worker.balanceChange = Math.min(worker.balance, toSend) * -1;
                         }
                         else {
@@ -362,6 +362,8 @@ function SetupForPool(logger, poolOptions, setupFinished) {
                         callback(null, workers, rounds);
                         return;
                     }
+
+                    let sendTransactionCalls = [];
                     for (w in workers) {
                         let worker = workers[w];
 
@@ -376,39 +378,21 @@ function SetupForPool(logger, poolOptions, setupFinished) {
                             value: worker.reward
                         };
 
-                        unlockAccountIfNecessary(poolAddress, poolOptions.addressPassword, function (isUnlocked) {
-                            if (isUnlocked) {
-                                daemon.cmd('eth_sendTransaction', [transactionData], function (result) {
-                                    if (result.error && result.error.code === -6) {
-                                        let higherPercent = withholdPercent + 0.01;
-                                        logger.warning(logSystem, logComponent, 'Not enough funds to cover the tx fees for sending out payments, decreasing rewards by '
-                                            + (higherPercent * 100) + '% and retrying');
-                                        trySend(higherPercent);
-                                    }
-                                    else if (result.error) {
-                                        logger.error(logSystem, logComponent, 'Error trying to send payments with RPC sendmany '
-                                            + JSON.stringify(result.error));
-                                        callback(true);
-                                    }
-                                    else {
-                                        logger.debug(logSystem, logComponent, 'Sent out a total of ' + (totalSent / magnitude)
-                                            + ' to ' + Object.keys(addressAmounts).length + ' workers');
-                                        if (withholdPercent > 0) {
-                                            logger.warning(logSystem, logComponent, 'Had to withhold ' + (withholdPercent * 100)
-                                                + '% of reward from miners to cover transaction fees. '
-                                                + 'Fund pool wallet with coins to prevent this from happening');
-                                        }
-                                        callback(null, workers, rounds);
-                                    }
-                                });
-                            } else {
-                                callback(true);
+                        sendTransactionCalls.push(sendTransactionCall(transactionData, withholdPercent, addressAmounts, totalSent, trySend));
+                    }
+
+                    async.parallel(sendTransactionCalls, function (err, transactions) {
+                        transactions.forEach(transaction => {
+                            if (transaction.error) {
+                                //TODO:  error management
                             }
                         });
-                    }
-                };
-                trySend(0);
 
+                        callback(null, workers, rounds);
+                    });
+                };
+
+                trySend(0);
             },
             function (workers, rounds, callback) {
 
@@ -424,7 +408,7 @@ function SetupForPool(logger, poolOptions, setupFinished) {
                             'hincrbyfloat',
                             coin + ':balances',
                             w,
-                            satoshisToCoins(worker.balanceChange)
+                            weiToCoins(worker.balanceChange)
                         ]);
                     }
                     if (worker.sent !== 0) {
@@ -543,5 +527,39 @@ function SetupForPool(logger, poolOptions, setupFinished) {
 
     let isConfirmedBlock = function (block, lastBlockNumber) {
         return (lastBlockNumber - block.result.number) >= poolOptions.paymentProcessing.minimumConfirmationsShield;
+    };
+
+    let sendTransactionCall = function (transactionData, withholdPercent, addressAmounts, totalSent, trySend) {
+        return function (callback) {
+            unlockAccountIfNecessary(transactionData.from, poolOptions.addressPassword, function (isUnlocked) {
+                if (isUnlocked) {
+                    daemon.cmd('eth_sendTransaction', [transactionData], function (result) {
+                        if (result.error && result.error.code === -6) {
+                            let higherPercent = withholdPercent + 0.01;
+                            logger.warning(logSystem, logComponent, 'Not enough funds to cover the tx fees for sending out payments, decreasing rewards by '
+                                + (higherPercent * 100) + '% and retrying');
+                            trySend(higherPercent);
+                        }
+                        else if (result.error) {
+                            logger.error(logSystem, logComponent, 'Error trying to send payments with RPC eth_sendTransaction '
+                                + JSON.stringify(result.error));
+                            callback(result, null);
+                        }
+                        else {
+                            logger.debug(logSystem, logComponent, 'Sent out a total of ' + (totalSent / magnitude)
+                                + ' to ' + Object.keys(addressAmounts).length + ' workers');
+                            if (withholdPercent > 0) {
+                                logger.warning(logSystem, logComponent, 'Had to withhold ' + (withholdPercent * 100)
+                                    + '% of reward from miners to cover transaction fees. '
+                                    + 'Fund pool wallet with coins to prevent this from happening');
+                            }
+                            callback(null, result);
+                        }
+                    });
+                } else {
+                    callback(true);
+                }
+            });
+        }
     }
 }
