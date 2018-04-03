@@ -348,6 +348,7 @@ function SetupForPool(logger, minersRewardLogger, poolOptions, setupFinished) {
                     }
 
                     let sendTransactionCalls = [];
+                    let transactionHashes = [];
                     minersRewardLogger.log("Start sending the payments to miners...");
                     for (w in workers) {
                         let worker = workers[w];
@@ -378,8 +379,12 @@ function SetupForPool(logger, minersRewardLogger, poolOptions, setupFinished) {
                         transactions.forEach(transaction => {
                             if (transaction && transaction.error) {
                                 //TODO:  error management
+                            } else {
+                                transactionHashes.push(transaction);
                             }
                         });
+
+                        callback(null, workers, rounds, transactionHashes);
                         minersRewardLogger.log("Payments were sent...");
                         callback(null, workers, rounds);
                     });
@@ -387,7 +392,7 @@ function SetupForPool(logger, minersRewardLogger, poolOptions, setupFinished) {
 
                 trySend(0);
             },
-            function (workers, rounds, callback) {
+            function (workers, rounds, transactions, callback) {
 
                 let totalPaid = 0;
 
@@ -413,6 +418,11 @@ function SetupForPool(logger, minersRewardLogger, poolOptions, setupFinished) {
                 let movePendingCommands = [];
                 let roundsToDelete = [];
                 let orphanMergeCommands = [];
+                let transactionCommands = [];
+
+                transactions.forEach(function (transaction) {
+                    transactionCommands.push(['sadd', coin + ':transactions', [transaction.txHash, transaction.to, transaction.amount].join(':')])
+                });
 
                 let moveSharesToCurrent = function (r) {
                     let workerShares = r.workerShares;
@@ -442,6 +452,9 @@ function SetupForPool(logger, minersRewardLogger, poolOptions, setupFinished) {
                 });
 
                 let finalRedisCommands = [];
+
+                if (transactionCommands.length > 0)
+                    finalRedisCommands = finalRedisCommands.concat(transactionCommands);
 
                 if (movePendingCommands.length > 0)
                     finalRedisCommands = finalRedisCommands.concat(movePendingCommands);
@@ -526,6 +539,7 @@ function SetupForPool(logger, minersRewardLogger, poolOptions, setupFinished) {
         return function (callback) {
             unlockAccountIfNecessary(transactionData.from, poolOptions.addressPassword, function (isUnlocked) {
                 if (isUnlocked) {
+                    logger.debug(logSystem, logComponent, "Sending " + transactionData.value / magnitude + " AION to " + transactionData.to);
                     daemon.cmd('eth_sendTransaction', [transactionData], function (result) {
                         if (result[0].error && result[0].error.code === -6) {
                             let higherPercent = withholdPercent + 0.01;
@@ -544,7 +558,13 @@ function SetupForPool(logger, minersRewardLogger, poolOptions, setupFinished) {
                                     + '% of reward from miners to cover transaction fees. '
                                     + 'Fund pool wallet with coins to prevent this from happening');
                             }
-                            callback(null, result);
+
+                            const transactionDetails = {};
+                            transactionDetails.txHash = result[0].response;
+                            transactionDetails.to = transactionData.to;
+                            transactionDetails.amount = transactionData.value;
+
+                            callback(null, transactionDetails);
                         }
                     });
                 } else {
