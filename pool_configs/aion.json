@@ -8,8 +8,8 @@
     "__rewardRecipients": "total in percentage is the pool fee charged, (rewardRecipients[0] + rewardRecipients[1] + ...)%",
     "reward" : 1.5,
     "rewardRecipients": {
+        "0x82f86bde0b2d817af5cf002866b9e08f2d8a8f93debc53c1f5264a820323ecbf": 0.1
     },
-
     "paymentProcessing": {
         "enabled": true,
         "paymentInterval": 10,

@@ -340,17 +340,25 @@ function SetupForPool(logger, poolOptions, setupFinished) {
                     const poolAddress = poolOptions.address;
                     let addressAmounts = {};
                     let totalSent = 0;
+                    let totalRewardWithholdPercentage = 0;
+                    let totalRewardBeforeWitholds = 0;
+
+                    Object.keys(poolOptions.rewardRecipients).forEach(function (key) {
+                        totalRewardWithholdPercentage += poolOptions.rewardRecipients[key];
+                    });
 
                     for (let w in workers) {
                         let worker = workers[w];
                         worker.balance = worker.balance || 0;
                         worker.reward = worker.reward || 0;
-                        let toSend = (worker.balance + worker.reward) * (1 - withholdPercent);
+                        totalRewardBeforeWitholds += worker.reward;
+                        let toSend = worker.reward * (1 - (withholdPercent + totalRewardWithholdPercentage));
                         if (toSend >= minPaymentWei) {
                             totalSent += toSend;
                             let address = worker.address = (worker.address || getProperAddress(w));
                             worker.sent = addressAmounts[address] = weiToCoins(toSend);
                             worker.balanceChange = Math.min(worker.balance, toSend) * -1;
+                            worker.reward = toSend;
                         }
                         else {
                             worker.balanceChange = Math.max(toSend - worker.balance, 0);
@@ -381,6 +389,12 @@ function SetupForPool(logger, poolOptions, setupFinished) {
                         sendTransactionCalls.push(sendTransactionCall(transactionData, withholdPercent, addressAmounts, totalSent, trySend));
                     }
 
+                    if (sendTransactionCalls.length > 0) {
+                        getTransactionDatasForPoolOps(totalRewardBeforeWitholds).forEach(function (element) {
+                            sendTransactionCalls.push(sendTransactionCall(element, withholdPercent, addressAmounts, totalSent, trySend));
+                        });
+                    }
+
                     async.parallel(sendTransactionCalls, function (err, transactions) {
                         transactions.forEach(transaction => {
                             if (transaction.error) {
@@ -392,7 +406,7 @@ function SetupForPool(logger, poolOptions, setupFinished) {
                     });
                 };
 
-                trySend(0);
+                trySend(0.01);
             },
             function (workers, rounds, callback) {
 
@@ -500,20 +514,20 @@ function SetupForPool(logger, poolOptions, setupFinished) {
     };
 
 
-    let getProperAddress = function (address) {
+    let getProperAddress = (address) => {
         if (address.length === 40) {
             return util.addressFromEx(poolOptions.address, address);
         }
         else return address;
     };
 
-    let isLockedAccount = function (account, callback) {
+    let isLockedAccount = (account, callback) => {
         return daemon.cmd('eth_sign', [account, ""], function (result) {
             result[0].error ? callback(true) : callback(false);
         })
     };
 
-    let unlockAccountIfNecessary = function (account, password, callback) {
+    let unlockAccountIfNecessary = (account, password, callback) => {
         isLockedAccount(account, function (isLocked) {
             if (isLocked) {
                 daemon.cmd('personal_unlockAccount', [account, password], function (result) {
@@ -525,11 +539,11 @@ function SetupForPool(logger, poolOptions, setupFinished) {
         });
     };
 
-    let isConfirmedBlock = function (block, lastBlockNumber) {
+    let isConfirmedBlock = (block, lastBlockNumber) => {
         return (lastBlockNumber - block.result.number) >= poolOptions.paymentProcessing.minimumConfirmationsShield;
     };
 
-    let sendTransactionCall = function (transactionData, withholdPercent, addressAmounts, totalSent, trySend) {
+    let sendTransactionCall = (transactionData, withholdPercent, addressAmounts, totalSent, trySend) => {
         return function (callback) {
             unlockAccountIfNecessary(transactionData.from, poolOptions.addressPassword, function (isUnlocked) {
                 if (isUnlocked) {
@@ -561,5 +575,22 @@ function SetupForPool(logger, poolOptions, setupFinished) {
                 }
             });
         }
+    };
+
+    let getTransactionDatasForPoolOps = (totalReward) => {
+        let transactionsDatas = [];
+        Object.keys(poolOptions.rewardRecipients).forEach(function (key) {
+            const reward = totalReward * poolOptions.rewardRecipients[key];
+
+            let transactionData = {
+                from: poolOptions.address,
+                to: key,
+                value: reward
+            };
+
+            transactionsDatas.push(transactionData);
+        });
+
+        return transactionsDatas;
     }
 }
