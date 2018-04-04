@@ -3,8 +3,8 @@
 	<mode>aion</mode>
 	<id>2da62542-999f-4405-bdb3-50d8c61bed64</id>
 	<api>
-		<rpc active="true" ip="127.0.0.1" port="8545"></rpc>
-		<java active="true" ip="127.0.0.1" port="8547"></java>
+		<rpc active="true" ip="0.0.0.0" port="8545"></rpc>
+		<java active="true" ip="0.0.0.0" port="8547"></java>
 		<nrg>
 			<default>1E9</default>
 			<max>100E9</max>

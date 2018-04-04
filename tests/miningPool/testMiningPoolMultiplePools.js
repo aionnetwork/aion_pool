@@ -38,8 +38,8 @@ let startMiners = () => {
     });
 };
 
-startMiningPools();
-startMiners();
+// startMiningPools();
+// startMiners();
 
 let cleanupFunction = () => {
     console.log('cleaning up the processes');
