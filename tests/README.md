@@ -19,9 +19,10 @@ The payment processor test will take about 3 minutes to finish as it waits for b
 
 #### Mining pool testing
 
-The mining pool testing will need two separate mining pools and configuring these locations in testConfig.json.
-The reason for this is that we will use the mining pools on the same node to test if the pools can handle themselves when 
-other pools are in the equation.
+Multiple mining tests cannot be executed locally automatically, because only one mining pool can connect to one node. 
+Therefore, automated tests are inconclusive for now. The docker images created can still be used to deploy, the keystore
+will be persisted on the host in /opt/aion/keystore.
 
-Both pools need to be configured (run configure.sh) to run on the same AION node.
-
+The docker-compose.yml file from aion_pool/docker can be used to start a miner and node locally.
+This will create an account and that will be the mining_pool's account in which payments will be sent. The keystore will 
+be persisted on the host machine as well.

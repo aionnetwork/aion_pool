@@ -6,22 +6,13 @@ services:
     build:
       context: ./
       dockerfile: Dockerfile
-    container_name: mining-pool1
+    container_name: mining-pool
     links:
       - aion-kernel:aion-kernel
     ports:
       - "3009:3008"
     volumes:
       - keystore:/opt/aion/keystore
-  mining-pool2:
-    image: mining-pool
-    container_name: mining-pool2
-    links:
-      - aion-kernel:aion-kernel
-    volumes:
-      - keystore:/opt/aion/keystore
-    ports:
-      - "3010:3008"
   aion-kernel:
     image: aion-kernel
     container_name: aion-kernel

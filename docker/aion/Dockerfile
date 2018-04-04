@@ -10,7 +10,6 @@ RUN echo oracle-java9-installer shared/accepted-oracle-license-v1-1 select true 
 
 RUN apt install -y wget expect && cd /opt/ \
     && wget https://github.com/aionnetwork/aion/releases/download/v0.1.18/aion-v0.1.18.42be2c7-2018-03-30.tar.bz2 -O aion.tar.bz2 \
-    && ls \
     && tar -xf aion.tar.bz2
 
 COPY config.xml /opt/aion/config/
