@@ -343,7 +343,7 @@ function SetupForPool(logger, minersRewardLogger, poolOptions, setupFinished) {
                     }
 
                     if (Object.keys(addressAmounts).length === 0) {
-                        callback(null, workers, rounds);
+                        callback(null, workers, rounds, []);
                         return;
                     }
 
