@@ -1,4 +1,4 @@
-version: '3'
+version: '3.3'
 
 services:
   mining-pool:
@@ -11,17 +11,25 @@ services:
       - aion-kernel
     ports:
       - "3009:3008"
+    volumes:
+      - keystore:/opt/aion/keystore
   mining-pool2:
     image: mining-pool
     container_name: mining-pool2
     links:
       - aion-kernel
+    volumes:
+      - keystore:/opt/aion/keystore
     ports:
       - "3010:3008"
   aion-kernel:
     image: aion-kernel
     container_name: aion-kernel
     build: ./aion/
-    ports:
-      - "8545:8545"
-      - "19333:19333"
+    volumes:
+      - /opt/aion/keystore:/opt/aion/keystore
+      - keystore:/opt/aion/keystore
+
+
+volumes:
+  keystore:

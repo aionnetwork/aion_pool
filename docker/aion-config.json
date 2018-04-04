@@ -2,8 +2,8 @@
   "enabled": true,
   "testnet": true,
   "coin": "aion.json",
-  "address": "<<address>>",
-  "addressPassword": "<<addressPassword>>",
+  "address": "<<localaddr>>",
+  "addressPassword": "asd",
 
   "__rewardRecipients": "total in percentage is the pool fee charged, (rewardRecipients[0] + rewardRecipients[1] + ...)%",
   "reward" : 1.5,

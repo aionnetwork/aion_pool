@@ -30,7 +30,7 @@ let startMiners = () => {
     });
 
     //start second miner
-    let argument2 = "-t " + testConfig.miner2Threads + " -u " + testConfig.miner2;
+    let argument2 = ["-t", testConfig.miner1Threads, "-u", testConfig.miner1];
     minerProcess2 = spawn(testConfig.aionminerCpuLocation, [argument2], { detached: true});
 
     minerProcess2.on('error', function(err){
