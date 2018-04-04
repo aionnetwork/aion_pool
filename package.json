@@ -35,7 +35,8 @@
         "nonce": "*",
         "redis": "*",
         "request": "*",
-        "stratum-pool": "file:local_modules/stratum-pool"
+        "stratum-pool": "file:local_modules/stratum-pool",
+        "aion-web3": "0.0.3"
     },
     "devDependencies": {
         "gulp": "^3.9.1",

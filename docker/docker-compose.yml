@@ -1,0 +1,27 @@
+version: '3.3'
+
+services:
+  mining-pool:
+    image: mining-pool
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    container_name: mining-pool
+    links:
+      - aion-kernel:aion-kernel
+    ports:
+      - "3009:3008"
+    volumes:
+      - keystore:/opt/aion/keystore
+  aion-kernel:
+    image: aion-kernel
+    container_name: aion-kernel
+    build: ./aion/
+    ports:
+      - "8545:8545"
+    volumes:
+      - /opt/aion/keystore:/opt/aion/keystore
+      - keystore:/opt/aion/keystore
+
+volumes:
+  keystore:
