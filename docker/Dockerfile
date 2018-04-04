@@ -25,6 +25,9 @@ WORKDIR /opt/aion_pool/
 
 ENV PATH="${PATH}:/opt/aion_pool/node/bin"
 
-COPY aion-config.json /opt/aion_pool/pool_configs/aion.jsony
+COPY aion-config.json /opt/aion_pool/pool_configs/aion.json
+COPY replace-address.sh /opt/aion_pool/pool_configs/
 
-CMD [ "/bin/bash", "run_quickstart.sh" ]
+RUN chmod +x /opt/aion_pool/pool_configs/replace-address.sh
+
+ENTRYPOINT /opt/aion_pool/pool_configs/replace-address.sh && /opt/aion_pool/run_quickstart.sh

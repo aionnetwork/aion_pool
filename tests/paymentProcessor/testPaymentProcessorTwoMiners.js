@@ -54,7 +54,7 @@ setTimeout(verifyBothMinersGetPaidFromTimeToTime, 180000);
 let cleanupFunction = () => {
     console.log('cleaning up the processes');
     minerProcess1.kill();
-    minerProcess1.kill();
+    minerProcess2.kill();
     process.exit();
 };
 
