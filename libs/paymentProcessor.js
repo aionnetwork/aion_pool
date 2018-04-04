@@ -50,9 +50,9 @@ function SetupForPool(logger, poolOptions, setupFinished) {
     });
     let redisClient = redis.createClient(poolOptions.redis.port, poolOptions.redis.host);
 
-    let magnitude;
-    let minPaymentWei;
-    let coinPrecision;
+    const magnitude = 1000000000000000000;
+    const minPaymentWei = parseInt(processingConfig.minimumPayment * magnitude);
+    const coinPrecision = magnitude.toString().length - 1;
 
     let paymentInterval;
 
@@ -72,31 +72,6 @@ function SetupForPool(logger, poolOptions, setupFinished) {
                     callback()
                 }
             }, true);
-        },
-        function (callback) {
-            daemon.cmd('eth_getBalance', [poolOptions.address], function (result) {
-                if (result.error) {
-                    callback(true);
-                    return;
-                }
-                try {
-                    //we are using Wei as unit 100000000000000000 Wei = 1 AION
-                    const response = JSON.parse(result.data);
-                    let d = response.result;
-
-                    //TODO: to check if eth_getbalance always returns same length hex, otherwise this logic will break
-                    magnitude = parseInt('10' + new Array(d.length).join('0'));
-
-                    minPaymentWei = parseInt(processingConfig.minimumPayment * magnitude);
-                    coinPrecision = magnitude.toString().length - 1;
-                    callback();
-                }
-                catch (e) {
-                    logger.error(logSystem, logComponent, 'Error detecting number of wei in a coin, cannot do payment processing. Tried parsing: ' + result.data);
-                    callback(true);
-                }
-
-            }, true, true);
         }
     ], function (err) {
         if (err) {
@@ -178,7 +153,7 @@ function SetupForPool(logger, poolOptions, setupFinished) {
                         let details = r.split(':');
                         return {
                             blockHash: details[0],
-                            txHash: details[1],
+                            reward: details[1],
                             height: details[2],
                             serialized: r
                         };
@@ -228,7 +203,6 @@ function SetupForPool(logger, poolOptions, setupFinished) {
 
                         if (block.result.miner === poolOptions.address) {
                             round.category = 'generate';
-                            round.reward = poolOptions.reward || 1.5;
                         } else {
                             round.category = 'kicked';
                         }
