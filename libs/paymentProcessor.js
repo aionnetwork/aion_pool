@@ -370,6 +370,8 @@ function SetupForPool(logger, poolOptions, setupFinished) {
                     }
 
                     async.parallel(sendTransactionCalls, function (err, transactions) {
+                        logger.debug(logSystem, logComponent, 'Sent out a total of ' + (totalSent / magnitude)
+                            + ' to ' + Object.keys(transactions).length + ' addresses (including pool\'s)');
                         transactions.forEach(transaction => {
                             if (transaction.error) {
                                 //TODO:  error management
@@ -380,7 +382,7 @@ function SetupForPool(logger, poolOptions, setupFinished) {
                     });
                 };
 
-                trySend(0.01);
+                trySend(0);
             },
             function (workers, rounds, callback) {
 
@@ -534,8 +536,6 @@ function SetupForPool(logger, poolOptions, setupFinished) {
                             callback(result, null);
                         }
                         else {
-                            logger.debug(logSystem, logComponent, 'Sent out a total of ' + (totalSent / magnitude)
-                                + ' to ' + Object.keys(addressAmounts).length + ' workers');
                             if (withholdPercent > 0) {
                                 logger.warning(logSystem, logComponent, 'Had to withhold ' + (withholdPercent * 100)
                                     + '% of reward from miners to cover transaction fees. '

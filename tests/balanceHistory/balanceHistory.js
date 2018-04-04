@@ -9,7 +9,7 @@ let miner1Process;
 let miner2Process;
 
 let startMiners = () => {
-    const miner1Args = ["-t", 1, "-u", testConfig.miner1];
+    const miner1Args = ["-t", 2, "-u", testConfig.miner1];
     miner1Process = spawn(testConfig.aionminerCpuLocation, miner1Args, {detached: true});
     miner1Process.on('error', function (err) {
         console.log(err);
