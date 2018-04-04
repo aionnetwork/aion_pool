@@ -219,7 +219,7 @@ module.exports = function(logger){
     };
 
     var route = function(req, res, next){
-        var pageId = req.params.page || '';
+        var pageId = req.params.page || 'getting_started';
         if (pageId in indexesProcessed){
             res.header('Content-Type', 'text/html');
             res.end(indexesProcessed[pageId]);
@@ -237,7 +237,7 @@ module.exports = function(logger){
     app.use(bodyParser.json());
 
     app.get('/get_page', function(req, res, next){
-        var requestedPage = getPage(req.query.id);
+        var requestedPage = getPage(req.query.id || 'getting_started');
         if (requestedPage){
             res.end(requestedPage);
             return;
