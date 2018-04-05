@@ -326,7 +326,7 @@ function SetupForPool(logger, poolOptions, setupFinished) {
                         worker.balance = worker.balance || 0;
                         worker.reward = worker.reward || 0;
                         totalRewardBeforeWitholds += worker.reward;
-                        let toSend = worker.reward * (1 - (withholdPercent + totalRewardWithholdPercentage));
+                        let toSend = parseInt(worker.reward * (1 - (withholdPercent + totalRewardWithholdPercentage)));
                         if (toSend >= minPaymentWei) {
                             totalSent += toSend;
                             let address = worker.address = (worker.address || getProperAddress(w));
@@ -373,7 +373,7 @@ function SetupForPool(logger, poolOptions, setupFinished) {
                         logger.debug(logSystem, logComponent, 'Sent out a total of ' + (totalSent / magnitude)
                             + ' to ' + Object.keys(transactions).length + ' addresses (including pool\'s)');
                         transactions.forEach(transaction => {
-                            if (transaction.error) {
+                            if (transaction && transaction.error) {
                                 //TODO:  error management
                             }
                         });
@@ -524,13 +524,13 @@ function SetupForPool(logger, poolOptions, setupFinished) {
             unlockAccountIfNecessary(transactionData.from, poolOptions.addressPassword, function (isUnlocked) {
                 if (isUnlocked) {
                     daemon.cmd('eth_sendTransaction', [transactionData], function (result) {
-                        if (result.error && result.error.code === -6) {
+                        if (result[0].error && result[0].error.code === -6) {
                             let higherPercent = withholdPercent + 0.01;
                             logger.warning(logSystem, logComponent, 'Not enough funds to cover the tx fees for sending out payments, decreasing rewards by '
                                 + (higherPercent * 100) + '% and retrying');
                             trySend(higherPercent);
                         }
-                        else if (result.error) {
+                        else if (result[0].error) {
                             logger.error(logSystem, logComponent, 'Error trying to send payments with RPC eth_sendTransaction '
                                 + JSON.stringify(result.error));
                             callback(result, null);
@@ -554,7 +554,7 @@ function SetupForPool(logger, poolOptions, setupFinished) {
     let getTransactionDatasForPoolOps = (totalReward) => {
         let transactionsDatas = [];
         Object.keys(poolOptions.rewardRecipients).forEach(function (key) {
-            const reward = totalReward * poolOptions.rewardRecipients[key];
+            const reward = parseInt(totalReward * poolOptions.rewardRecipients[key]);
 
             let transactionData = {
                 from: poolOptions.address,
