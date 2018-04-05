@@ -50,9 +50,9 @@ function SetupForPool(logger, poolOptions, setupFinished) {
     });
     let redisClient = redis.createClient(poolOptions.redis.port, poolOptions.redis.host);
 
-    let magnitude;
-    let minPaymentWei;
-    let coinPrecision;
+    const magnitude = 1000000000000000000;
+    const minPaymentWei = parseInt(processingConfig.minimumPayment * magnitude);
+    const coinPrecision = magnitude.toString().length - 1;
 
     let paymentInterval;
 
@@ -72,31 +72,6 @@ function SetupForPool(logger, poolOptions, setupFinished) {
                     callback()
                 }
             }, true);
-        },
-        function (callback) {
-            daemon.cmd('eth_getBalance', [poolOptions.address], function (result) {
-                if (result.error) {
-                    callback(true);
-                    return;
-                }
-                try {
-                    //we are using Wei as unit 100000000000000000 Wei = 1 AION
-                    const response = JSON.parse(result.data);
-                    let d = response.result;
-
-                    //TODO: to check if eth_getbalance always returns same length hex, otherwise this logic will break
-                    magnitude = parseInt('10' + new Array(d.length).join('0'));
-
-                    minPaymentWei = parseInt(processingConfig.minimumPayment * magnitude);
-                    coinPrecision = magnitude.toString().length - 1;
-                    callback();
-                }
-                catch (e) {
-                    logger.error(logSystem, logComponent, 'Error detecting number of wei in a coin, cannot do payment processing. Tried parsing: ' + result.data);
-                    callback(true);
-                }
-
-            }, true, true);
         }
     ], function (err) {
         if (err) {
@@ -178,7 +153,7 @@ function SetupForPool(logger, poolOptions, setupFinished) {
                         let details = r.split(':');
                         return {
                             blockHash: details[0],
-                            txHash: details[1],
+                            reward: details[1],
                             height: details[2],
                             serialized: r
                         };
@@ -228,7 +203,6 @@ function SetupForPool(logger, poolOptions, setupFinished) {
 
                         if (block.result.miner === poolOptions.address) {
                             round.category = 'generate';
-                            round.reward = poolOptions.reward || 1.5;
                         } else {
                             round.category = 'kicked';
                         }
@@ -340,17 +314,25 @@ function SetupForPool(logger, poolOptions, setupFinished) {
                     const poolAddress = poolOptions.address;
                     let addressAmounts = {};
                     let totalSent = 0;
+                    let totalRewardWithholdPercentage = 0;
+                    let totalRewardBeforeWitholds = 0;
+
+                    Object.keys(poolOptions.rewardRecipients).forEach(function (key) {
+                        totalRewardWithholdPercentage += poolOptions.rewardRecipients[key];
+                    });
 
                     for (let w in workers) {
                         let worker = workers[w];
                         worker.balance = worker.balance || 0;
                         worker.reward = worker.reward || 0;
-                        let toSend = (worker.balance + worker.reward) * (1 - withholdPercent);
+                        totalRewardBeforeWitholds += worker.reward;
+                        let toSend = parseInt(worker.reward * (1 - (withholdPercent + totalRewardWithholdPercentage)));
                         if (toSend >= minPaymentWei) {
                             totalSent += toSend;
                             let address = worker.address = (worker.address || getProperAddress(w));
                             worker.sent = addressAmounts[address] = weiToCoins(toSend);
                             worker.balanceChange = Math.min(worker.balance, toSend) * -1;
+                            worker.reward = toSend;
                         }
                         else {
                             worker.balanceChange = Math.max(toSend - worker.balance, 0);
@@ -381,9 +363,17 @@ function SetupForPool(logger, poolOptions, setupFinished) {
                         sendTransactionCalls.push(sendTransactionCall(transactionData, withholdPercent, addressAmounts, totalSent, trySend));
                     }
 
+                    if (sendTransactionCalls.length > 0) {
+                        getTransactionDatasForPoolOps(totalRewardBeforeWitholds).forEach(function (element) {
+                            sendTransactionCalls.push(sendTransactionCall(element, withholdPercent, addressAmounts, totalSent, trySend));
+                        });
+                    }
+
                     async.parallel(sendTransactionCalls, function (err, transactions) {
+                        logger.debug(logSystem, logComponent, 'Sent out a total of ' + (totalSent / magnitude)
+                            + ' to ' + Object.keys(transactions).length + ' addresses (including pool\'s)');
                         transactions.forEach(transaction => {
-                            if (transaction.error) {
+                            if (transaction && transaction.error) {
                                 //TODO:  error management
                             }
                         });
@@ -500,20 +490,20 @@ function SetupForPool(logger, poolOptions, setupFinished) {
     };
 
 
-    let getProperAddress = function (address) {
+    let getProperAddress = (address) => {
         if (address.length === 40) {
             return util.addressFromEx(poolOptions.address, address);
         }
         else return address;
     };
 
-    let isLockedAccount = function (account, callback) {
+    let isLockedAccount = (account, callback) => {
         return daemon.cmd('eth_sign', [account, ""], function (result) {
             result[0].error ? callback(true) : callback(false);
         })
     };
 
-    let unlockAccountIfNecessary = function (account, password, callback) {
+    let unlockAccountIfNecessary = (account, password, callback) => {
         isLockedAccount(account, function (isLocked) {
             if (isLocked) {
                 daemon.cmd('personal_unlockAccount', [account, password], function (result) {
@@ -525,29 +515,27 @@ function SetupForPool(logger, poolOptions, setupFinished) {
         });
     };
 
-    let isConfirmedBlock = function (block, lastBlockNumber) {
+    let isConfirmedBlock = (block, lastBlockNumber) => {
         return (lastBlockNumber - block.result.number) >= poolOptions.paymentProcessing.minimumConfirmationsShield;
     };
 
-    let sendTransactionCall = function (transactionData, withholdPercent, addressAmounts, totalSent, trySend) {
+    let sendTransactionCall = (transactionData, withholdPercent, addressAmounts, totalSent, trySend) => {
         return function (callback) {
             unlockAccountIfNecessary(transactionData.from, poolOptions.addressPassword, function (isUnlocked) {
                 if (isUnlocked) {
                     daemon.cmd('eth_sendTransaction', [transactionData], function (result) {
-                        if (result.error && result.error.code === -6) {
+                        if (result[0].error && result[0].error.code === -6) {
                             let higherPercent = withholdPercent + 0.01;
                             logger.warning(logSystem, logComponent, 'Not enough funds to cover the tx fees for sending out payments, decreasing rewards by '
                                 + (higherPercent * 100) + '% and retrying');
                             trySend(higherPercent);
                         }
-                        else if (result.error) {
+                        else if (result[0].error) {
                             logger.error(logSystem, logComponent, 'Error trying to send payments with RPC eth_sendTransaction '
                                 + JSON.stringify(result.error));
                             callback(result, null);
                         }
                         else {
-                            logger.debug(logSystem, logComponent, 'Sent out a total of ' + (totalSent / magnitude)
-                                + ' to ' + Object.keys(addressAmounts).length + ' workers');
                             if (withholdPercent > 0) {
                                 logger.warning(logSystem, logComponent, 'Had to withhold ' + (withholdPercent * 100)
                                     + '% of reward from miners to cover transaction fees. '
@@ -561,5 +549,22 @@ function SetupForPool(logger, poolOptions, setupFinished) {
                 }
             });
         }
+    };
+
+    let getTransactionDatasForPoolOps = (totalReward) => {
+        let transactionsDatas = [];
+        Object.keys(poolOptions.rewardRecipients).forEach(function (key) {
+            const reward = parseInt(totalReward * poolOptions.rewardRecipients[key]);
+
+            let transactionData = {
+                from: poolOptions.address,
+                to: key,
+                value: reward
+            };
+
+            transactionsDatas.push(transactionData);
+        });
+
+        return transactionsDatas;
     }
 }

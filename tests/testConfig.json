@@ -1,10 +1,12 @@
 {
-  "miner1": "<<minerAddress1>>",
+  "miner1": "0x325a31f1a209ad1c518f8cf870fdf379bc7078fdd5344d86bee1258b86c23a34",
   "miner1Threads": "2",
   "miner1Location": "127.0.0.1:3009",
-  "miner2": "<<minerAddress2>>",
+  "miner2": "0x9a2598cd2445c2015c2de9119e388cea9bcb2e8b33282c617cd6af62cfbbb8e0",
   "miner2Threads": "1",
   "miner2Location": "127.0.0.1:3010",
-  "aionminerCpuLocation": "<<cpuMinerLocation>> (e.g. /home/alin/Workspace/aionminer-cpu)",
-  "dockerComposeLocation": "../../docker/"
+  "aionminerCpuLocation": "/home/alin/Workspace/aionminer-cpu",
+  "dockerComposeLocation": "../../docker/",
+  "poolAddress": "0x23debae4ec1ff3f1d4fc1d2f03300b80cb43704528b4a50a603f18eda1bdd547",
+  "poolOperatorAddress": "0x82f86bde0b2d817af5cf002866b9e08f2d8a8f93debc53c1f5264a820323ecbf"
 }
