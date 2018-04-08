@@ -66,3 +66,7 @@ footer a{
 footer iframe{
     vertical-align: middle;
 }
+
+a, a:visited {
+    color: #00619E;
+}

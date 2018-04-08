@@ -32,13 +32,10 @@
 
 </style>
 
-
 <div id="topCharts">
 
 {{ for(var pool in it.stats.pools) { }}
 
-    <div class="chartWrapper">
-        <div class="chartLabel">{{=it.stats.pools[pool].name}}</div>
         <div class="chartHolder">
             <table class="pure-table">
                 <thead>
@@ -61,6 +58,5 @@
                     </tr>
                 {{ } }}
             </table>
-        </div>
     </div>
 {{ } }}
