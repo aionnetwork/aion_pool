@@ -9,25 +9,33 @@
         height: 280px;
     }
 
-    .chartWrapper {
-        border: solid 1px #c7c7c7;
-        border-radius: 5px;
-        padding: 5px;
-        margin-bottom: 18px;
-    }
-
-    .chartLabel {
-        font-size: 1.2em;
-        text-align: center;
-        padding: 4px;
-    }
-
-    .chartHolder {
-
-    }
-
     table {
         width: 100%;
+    }
+
+    #inputContainer {
+        position:relative;
+        padding: 0;
+        margin: 0 auto 20px;
+        width: 300px;
+    }
+    #input {
+        height:25px;
+        width: 100%;
+        margin:0;
+        padding: 5px 30px 5px 5px;
+        border: 1px solid black;
+        border-radius: 4px;
+    }
+    #inputIcon {
+        position:absolute;
+        bottom:10px;
+        left:calc(100% + 10px);
+        width:14px;
+        height:14px;
+    }
+    #inputIcon:hover {
+        cursor: pointer;
     }
 
 </style>
@@ -37,6 +45,10 @@
 {{ for(var pool in it.stats.pools) { }}
 
         <div class="chartHolder">
+            <div id="inputContainer">
+                <input id="input" type="text" value>
+                <i id="inputIcon" class="fa fa-search"></i>
+            </div>
             <table class="pure-table">
                 <thead>
                 <tr>
@@ -59,4 +71,5 @@
                 {{ } }}
             </table>
     </div>
+</div>
 {{ } }}
