@@ -1,8 +1,8 @@
-const bignum = require('bignum')
-const merkleTree = require('./merkleTree.js')
-const transactions = require('./transactions.js')
-const util = require('./util.js')
-const diff1 = 0x00000000ffff0000000000000000000000000000000000000000000000000000
+const bignum = require('bignum');
+const merkleTree = require('./merkleTree.js');
+const transactions = require('./transactions.js');
+const util = require('./util.js');
+const diff1 = 0x00000000ffff0000000000000000000000000000000000000000000000000000;
 
 /**
  * The BlockTemplate class holds a single job.
@@ -19,7 +19,7 @@ module.exports = function BlockTemplate(
 ){
     //private members
 
-    let submits = []
+    let submits = [];
 
     function getMerkleHashes(steps){
         return steps.map(function(step){
@@ -28,20 +28,20 @@ module.exports = function BlockTemplate(
     }
 
     function getTransactionBuffers(txs){
-        var txHashes = txs.map(function(tx){
+        let txHashes = txs.map(function(tx){
             if (tx.txid !== undefined) {
                 return util.uint256BufferFromHash(tx.txid)
             }
             return util.uint256BufferFromHash(tx.hash)
-        })
+        });
         return [null].concat(txHashes)
     }
 
     function getVoteData(){
-        if (!rpcData.masternode_payments) return new Buffer([])
+        if (!rpcData.masternode_payments) return new Buffer([]);
 
         return Buffer.concat(
-            [util.varIntBuffer(rpcData.votes.length)].concat(
+            [util.letIntBuffer(rpcData.votes.length)].concat(
                 rpcData.votes.map(function (vt) {
                     return new Buffer(vt, 'hex')
                 })
@@ -51,22 +51,22 @@ module.exports = function BlockTemplate(
 
     //public members
 
-    this.rpcData = rpcData
-    this.jobId = jobId
-    this.headerHash = this.rpcData.headerHash
+    this.rpcData = rpcData;
+    this.jobId = jobId;
+    this.headerHash = this.rpcData.headerHash;
 
     this.target = rpcData.target ?
         bignum(rpcData.target, 16) :
-        util.bignumFromBitsHex(rpcData.bits)
+        util.bignumFromBitsHex(rpcData.bits);
 
-    this.difficulty = parseFloat((diff1 / this.target.toNumber()).toFixed(9))
+    this.difficulty = parseFloat((diff1 / this.target.toNumber()).toFixed(9));
 
-    this.prevHashReversed = util.reverseByteOrder(new Buffer(rpcData.previousblockhash, 'hex')).toString('hex')
+    this.prevHashReversed = util.reverseByteOrder(new Buffer(rpcData.previousblockhash, 'hex')).toString('hex');
     this.transactionData = Buffer.concat(rpcData.transactions.map(function(tx){
         return new Buffer(tx.data, 'hex')
-    }))
-    this.merkleTree = new merkleTree(getTransactionBuffers(rpcData.transactions))
-    this.merkleBranch = getMerkleHashes(this.merkleTree.steps)
+    }));
+    this.merkleTree = new merkleTree(getTransactionBuffers(rpcData.transactions));
+    this.merkleBranch = getMerkleHashes(this.merkleTree.steps);
     this.generationTransaction = transactions.CreateGeneration(
         rpcData,
         poolAddressScript,
@@ -74,7 +74,7 @@ module.exports = function BlockTemplate(
         reward,
         txMessages,
         recipients
-    )
+    );
 
     this.serializeCoinbase = function(extraNonce1, extraNonce2){
         return Buffer.concat([
@@ -83,13 +83,13 @@ module.exports = function BlockTemplate(
             extraNonce2,
             this.generationTransaction[1]
         ])
-    }
+    };
 
     //AION Block header specialization
     this.serializeHeader = function(merkleRoot, nTime, nonce){
         
-        var header =  new Buffer(528)
-        var position = 0
+        let header =  new Buffer(528);
+        let position = 0;
 
         //Serialize header based on equihash H(I || V || ....)
         //I - 496 bytes, V - 32 bytes 
@@ -117,11 +117,11 @@ module.exports = function BlockTemplate(
         return header
     }
 
-    //AION Block header specialization - TO FINISH TOMORROW
+    //AION Block header specialization
     this.serializeHeaderTarget = function(nonce, soln, nTime){
         
-        var header = Buffer.alloc(1936)
-        var position = 0
+        let header = Buffer.alloc(1936);
+        let position = 0;
         
         header.write(rpcData.blockHeader.parentHash, position+=0, 32, 'hex'); //Parent Hash
         header.write(rpcData.blockHeader.coinBase, position+=32, 32, 'hex'); //Coinbase
@@ -140,7 +140,7 @@ module.exports = function BlockTemplate(
         header.write(rpcData.blockHeader.energyLimit, position+=8, 8, 'hex'); //Energy Limit
 
         return header
-    }
+    };
 
 
     this.serializeBlock = function(header, coinbase){
@@ -156,16 +156,16 @@ module.exports = function BlockTemplate(
             //POS coins require a zero byte appended to block which the daemon replaces with the signature
             new Buffer(reward === 'POS' ? [0] : [])
         ])
-    }
+    };
 
     this.registerSubmit = function(extraNonce1, extraNonce2, nTime, nonce){
-        var submission = extraNonce1 + extraNonce2 + nTime + nonce
+        let submission = extraNonce1 + extraNonce2 + nTime + nonce
         if (submits.indexOf(submission) === -1){
-            submits.push(submission)
+            submits.push(submission);
             return true
         }
         return false
-    }
+    };
 
     this.getJobParams = function(){
         if (!this.jobParams){
@@ -191,4 +191,4 @@ module.exports = function BlockTemplate(
         }
         return this.jobParams
     }
-}
+};
