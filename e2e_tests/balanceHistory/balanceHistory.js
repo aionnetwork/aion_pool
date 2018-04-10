@@ -32,17 +32,17 @@ let printAccountsDetails = () => {
     const miner1Balance = getAccountDetails(testConfig.miner1);
     const miner2Balance = getAccountDetails(testConfig.miner2);
     const poolOpBalance = getAccountDetails(testConfig.poolOperatorAddress)
-    console.log('Pool balance: ' + poolBalance);
+    console.log('Pool balance:    ' + poolBalance);
     console.log('Miner 1 balance: ' + miner1Balance);
-    console.log('Miner 2 balance ' + miner2Balance);
-    console.log('Pool operator balance ' + poolOpBalance);
+    console.log('Miner 2 balance: ' + miner2Balance);
+    console.log('Pool operator:   ' + poolOpBalance);
     console.log('-------------------------------------------------------------------------');
 };
 
 startMiners();
 setInterval(function () {
     printAccountsDetails();
-}, 30 * 1000);
+}, 15 * 1000);
 
 let cleanupFunction = () => {
     console.log('cleaning up the processes');

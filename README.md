@@ -174,7 +174,33 @@ At this stage the mining pool is ready to receive client connections and to dist
 
 - The pool is configured to listen for client connections on port 3333 by default. This may be changed in the config.json file located in the root of the pool folder. 
 - Connect one of the solo mining clients to the pool using a location of **127.0.0.1:3333**. 
-- Once connected the client should begin receiving work within several seconds; if receiving work the pool has been successfully configured. 
+- Once connected the client should begin receiving work within several seconds; if receiving work the pool has been successfully configured.
+
+## Wallet type recommendation 
+
+### Miner
+
+As a miner the following possibilities can be taken into account:
+* personal hot wallet -  if mining for the purpose of staking/hodling the coins short or medium term, the miner can use 
+a personal wallet like: Jaxx, Exodus, Coinbase, etc.
+* exchange - if mining for the purpose of automatically selling the coins the best options is to use an exchange and 
+directly sell your coins
+* cold wallet - if mining for the purpose of staking/hodling the coins long term, the miner's best choice is the use of 
+a cold wallet
+    * paper wallet  
+    * trezor
+    * ledger
+    * keepkey
+
+### Mining pool operator
+
+As a mining pool operator the used addresses can be split into 2 categories:
+* the mining pool main address - this is the address which will be used by the pool to get the coins into and will later
+be used to execute the payments from
+* the mining pool operator addres(ses) - these are the addresses belonging to the actual pool operator. This address is 
+used to send the pool fees into during the payment processing. This can be configured in pool_configs/aion.json under "rewardRecipients".
+
+> The same ideas like from the miner apply when choosing the mining pool operator address(ses) type.
 
 License
 -------
