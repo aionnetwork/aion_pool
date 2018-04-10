@@ -1,5 +1,7 @@
 const dateFormat = require('dateformat');
-const colors = require('colors');
+const {createLogger, format, transports} = require('winston');
+const {printf} = format;
+require('winston-daily-rotate-file');
 
 const severityValues = {
     'debug': 1,
@@ -8,38 +10,60 @@ const severityValues = {
     'special': 4
 };
 
-function severityToColor(severity, text) {
-    switch(severity) {
-        case 'debug': return text.green;
-        case 'warning': return text.yellow;
-        case 'error': return text.red;
-        case 'special': return text.cyan.underline;
+const toWinstonLevel = function (level) {
+    switch (level) {
+        case 'warning':
+            return 'warn';
+        case 'special':
+            return 'silly';
         default:
-            console.log("unknown severity " + severity);
-            return text.italic
+            return level;
     }
-}
+};
 
 module.exports = function (configuration) {
-    let logLevelInt = severityValues[configuration.logLevel];
-    let logColors = configuration.logColors;
-    let log = function(severity, system, component, text, subcat) {
-        if (severityValues[severity] < logLevelInt) 
+    const logLevelInt = severityValues[configuration.logLevel];
+    const logColors = configuration.logColors;
+
+    const logFormat = printf(info => {
+        return `${info.level}: ${info.message}`;
+    });
+
+    const transport = new (transports.DailyRotateFile)({
+        dirname: 'logs',
+        filename: 'aion-pool-%DATE%.log',
+        datePattern: 'YYYY-MM-DD-HH',
+        zippedArchive: true,
+        maxSize: '20m',
+        maxFiles: '14d'
+    });
+
+    const logger = createLogger({
+        level: configuration.logLevel,
+        format: logFormat,
+        transports: [
+            new transports.Console(),
+            new transports.File({filename: 'logs/error.log', level: 'error'}),
+            transport
+        ]
+    });
+
+    const log = function (severity, system, component, text, subcat) {
+        if (severityValues[severity] < logLevelInt)
             return;
-        if (subcat){
+        if (subcat) {
             let realText = subcat;
             let realSubCat = text;
             text = realText;
             subcat = realSubCat
         }
-        let logString, 
+        let logString,
             entryDesc = dateFormat(new Date(), 'yyyy-mm-dd HH:MM:ss') + ' [' + system + ']\t';
         if (logColors) {
-            entryDesc = severityToColor(severity, entryDesc);
-            logString = entryDesc + ('[' + component + '] ').italic;
+            logString = entryDesc + ('[' + component + '] ');
             if (subcat)
-                logString += ('(' + subcat + ') ').bold.grey;
-            logString += text.grey;
+                logString += ('(' + subcat + ') ');
+            logString += text;
         }
         else {
             logString = entryDesc + '[' + component + '] ';
@@ -47,11 +71,16 @@ module.exports = function (configuration) {
                 logString += '(' + subcat + ') ';
             logString += text
         }
-        console.log(logString)
+
+        logger.log({
+            level: toWinstonLevel(severity),
+            message: logString
+        });
     };
+
     let _this = this;
     Object.keys(severityValues).forEach((logType) => {
-        _this[logType] = function() {
+        _this[logType] = function () {
             let args = Array.prototype.slice.call(arguments, 0);
             args.unshift(logType);
             log.apply(this, args);
