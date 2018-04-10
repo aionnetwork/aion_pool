@@ -6,3 +6,4 @@ redis/
 node/
 release/
 package-lock.json
+logs/
