@@ -314,14 +314,18 @@ const JobManager = module.exports = function JobManager(options) {
     };
 
     let getBlockReward = function (blockNumber) {
-        const blockReward = 1500000000000000000;
+        const blockReward = 1497989283243310185;
         const magnitude = 1000000000000000000;
         const rampUpLowerBound = 0;
         const rampUpUpperBound = 259200;
+        const rampUpStartValue = 748994641621655092;
+        const rampUpEndValue = blockReward;
+
         const delta = rampUpUpperBound - rampUpLowerBound;
-        const m = blockReward / delta;
+        const m = (rampUpEndValue - rampUpStartValue) / delta;
+
         if (blockNumber <= rampUpUpperBound) {
-            return (m * blockNumber) / magnitude;
+            return ((m * blockNumber) + rampUpStartValue) / magnitude;
         } else {
             return blockReward / magnitude;
         }
