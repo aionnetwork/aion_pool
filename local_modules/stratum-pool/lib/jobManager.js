@@ -319,7 +319,7 @@ const JobManager = module.exports = function JobManager(options) {
         const rampUpLowerBound = 0;
         const rampUpUpperBound = 259200;
         const rampUpStartValue = 748994641621655092;
-        const rampUpEndValue = 259200;
+        const rampUpEndValue = blockReward;
 
         const delta = rampUpUpperBound - rampUpLowerBound;
         const m = (rampUpEndValue - rampUpStartValue) / delta;
