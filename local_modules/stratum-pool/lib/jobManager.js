@@ -9,17 +9,27 @@ const blockTemplate = require('./blockTemplate.js');
 
 
 //Unique extranonce per subscriber
-let ExtraNonceCounter = function (configInstanceId) {
+var ExtraNonceCounter = function (configInstanceId) {
+
+    if (typeof configInstanceId == 'undefined' && configInstanceId) {
+        configInstanceId = crypto.randomBytes(4).readUInt32LE(0);
+    }
 
     const instanceId = configInstanceId || crypto.randomBytes(4).readUInt32LE(0);
-    let counter = instanceId << 27;
+    let counter = 0;
 
     this.next = function () {
-        const extraNonce = util.packUInt32BE(Math.abs(counter++));
-        return extraNonce.toString('hex');
+
+        const buff = new Buffer(8);
+        buff.writeUInt32BE(instanceId, 0);
+        buff.writeUInt32BE(Math.abs(counter++), 4);
+        return buff.toString('hex');
+
+        // var extraNonce = util.packUInt32BE(Math.abs(counter++));
+        // return extraNonce.toString('hex');
     };
 
-    this.size = 4; //bytes
+    this.size = 8; //bytes
 };
 
 //Unique job per new block template
@@ -292,7 +302,6 @@ const JobManager = module.exports = function JobManager(options) {
         //     }
         // }
 
-        blockHex = job.serializeBlock(headerBuffer, new Buffer(soln, 'hex')).toString('hex');
         blockHash = util.reverseBuffer(headerHash).toString('hex');
 
         _this.emit('share', {
@@ -307,21 +316,26 @@ const JobManager = module.exports = function JobManager(options) {
             blockDiff: blockDiffAdjusted,
             blockDiffActual: job.difficulty,
             blockHash: completeHeaderHash.toString('hex'),
-            blockHashInvalid: blockHashInvalid
-        }, blockHex, nTime, nonce, new Buffer(soln.slice(6), 'hex').toString('hex'), job.headerHash);
+            blockHashInvalid: blockHashInvalid,
+            staticHash: job.rpcData.headerHash
+        }, nTime, nonce, new Buffer(soln.slice(6), 'hex').toString('hex'), job.headerHash);
 
         return {result: true, error: null, blockHash: blockHash};
     };
 
     let getBlockReward = function (blockNumber) {
-        const blockReward = 1500000000000000000;
+        const blockReward = 1497989283243310185;
         const magnitude = 1000000000000000000;
         const rampUpLowerBound = 0;
         const rampUpUpperBound = 259200;
+        const rampUpStartValue = 748994641621655092;
+        const rampUpEndValue = 259200;
+
         const delta = rampUpUpperBound - rampUpLowerBound;
-        const m = blockReward / delta;
+        const m = (rampUpEndValue - rampUpStartValue) / delta;
+
         if (blockNumber <= rampUpUpperBound) {
-            return (m * blockNumber) / magnitude;
+            return ((m * blockNumber) + rampUpStartValue) / magnitude;
         } else {
             return blockReward / magnitude;
         }

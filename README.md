@@ -157,6 +157,14 @@ Eg.
 </consensus>
 ```
 
+- Enable "stratum" RPC methods by adding in the list ```<apis-enabled>``` 
+
+Eg.
+
+```
+<apis-enabled>web3,eth,personal,stratum</apis-enabled>
+```
+
 #### 7) Start the Aion kernel
 
 - Navigate to the aion install folder
