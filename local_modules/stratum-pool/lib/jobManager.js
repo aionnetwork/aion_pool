@@ -9,18 +9,18 @@ const blockTemplate = require('./blockTemplate.js');
 
 
 //Unique extranonce per subscriber
-var ExtraNonceCounter = function(configInstanceId){
+var ExtraNonceCounter = function (configInstanceId) {
 
-    if(typeof configInstanceId == 'undefined' && configInstanceId) {
+    if (typeof configInstanceId == 'undefined' && configInstanceId) {
         configInstanceId = crypto.randomBytes(4).readUInt32LE(0);
     }
 
-    var instanceId = configInstanceId || crypto.randomBytes(4).readUInt32LE(0);
-    var counter = 0;
+    const instanceId = configInstanceId || crypto.randomBytes(4).readUInt32LE(0);
+    let counter = 0;
 
-    this.next = function(){
+    this.next = function () {
 
-        var buff = new Buffer(8);
+        const buff = new Buffer(8);
         buff.writeUInt32BE(instanceId, 0);
         buff.writeUInt32BE(Math.abs(counter++), 4);
         return buff.toString('hex');
@@ -324,14 +324,18 @@ const JobManager = module.exports = function JobManager(options) {
     };
 
     let getBlockReward = function (blockNumber) {
-        const blockReward = 1500000000000000000;
+        const blockReward = 1497989283243310185;
         const magnitude = 1000000000000000000;
         const rampUpLowerBound = 0;
         const rampUpUpperBound = 259200;
+        const rampUpStartValue = 748994641621655092;
+        const rampUpEndValue = 259200;
+
         const delta = rampUpUpperBound - rampUpLowerBound;
-        const m = blockReward / delta;
+        const m = (rampUpEndValue - rampUpStartValue) / delta;
+
         if (blockNumber <= rampUpUpperBound) {
-            return (m * blockNumber) / magnitude;
+            return ((m * blockNumber) + rampUpStartValue) / magnitude;
         } else {
             return blockReward / magnitude;
         }
