@@ -39,7 +39,6 @@
     }
 
 </style>
-
 <div id="topCharts">
 
 {{ for(var pool in it.stats.pools) { }}
@@ -73,3 +72,21 @@
     </div>
 </div>
 {{ } }}
+<script>
+    $(function(){
+        $('#inputIcon').click(function(event){
+            var searchText = $('#input').val();
+            console.log(searchText);
+            window.location.href = '/workers/' + searchText;
+        });
+
+        $('#input').keyup(function(event){
+
+            if (event.keyCode !== 13) {
+                return;
+            }
+            var searchText = $('#input').val();
+            window.location.href = '/workers/' + searchText;
+        });
+    });
+</script>
