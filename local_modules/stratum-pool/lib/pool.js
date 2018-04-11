@@ -1,7 +1,7 @@
 const events = require('events');
 const async = require('async');
 
-const varDiff = require('./varDiff.js');
+const letDiff = require('./varDiff.js');
 const daemon = require('./daemon.js');
 const peer = require('./peer.js');
 const stratum = require('./stratum.js');
@@ -14,7 +14,7 @@ const algos = require('./algos.js');
     throw err;
 });*/
 
-var pool = module.exports = function pool(options, authorizeFn){
+let pool = module.exports = function pool(options, authorizeFn){
 
 
     //console.log(options)
@@ -22,14 +22,14 @@ var pool = module.exports = function pool(options, authorizeFn){
 
     this.options = options;
 
-    var _this = this;
-    var blockPollingIntervalId;
+    let _this = this;
+    let blockPollingIntervalId;
 
 
-    var emitLog        = function(text) { _this.emit('log', 'debug'  , text); };
-    var emitWarningLog = function(text) { _this.emit('log', 'warning', text); };
-    var emitErrorLog   = function(text) { _this.emit('log', 'error'  , text); };
-    var emitSpecialLog = function(text) { _this.emit('log', 'special', text); };
+    let emitLog        = function(text) { _this.emit('log', 'debug'  , text); };
+    let emitWarningLog = function(text) { _this.emit('log', 'warning', text); };
+    let emitErrorLog   = function(text) { _this.emit('log', 'error'  , text); };
+    let emitSpecialLog = function(text) { _this.emit('log', 'special', text); };
 
 
 
@@ -41,7 +41,7 @@ var pool = module.exports = function pool(options, authorizeFn){
 
 
     this.start = function(){
-        SetupVarDiff();
+        SetupletDiff();
         SetupApi();
         SetupDaemonInterface(function(){
             DetectCoinData(function(){
@@ -71,19 +71,19 @@ var pool = module.exports = function pool(options, authorizeFn){
                 return;
             }
 
-            var portWarnings = [];
+            let portWarnings = [];
 
-            var networkDiffAdjusted = options.initStats.difficulty;
+            let networkDiffAdjusted = options.initStats.difficulty;
 
             Object.keys(options.ports).forEach(function(port){
-                var portDiff = options.ports[port].diff;
+                let portDiff = options.ports[port].diff;
                 if (networkDiffAdjusted < portDiff)
                     portWarnings.push('port ' + port + ' w/ diff ' + portDiff);
             });
 
             //Only let the first fork show synced status or the log wil look flooded with it
             if (portWarnings.length > 0 && (!process.env.forkId || process.env.forkId === '0')) {
-                var warnMessage = 'Network diff of ' + networkDiffAdjusted + ' is lower than '
+                let warnMessage = 'Network diff of ' + networkDiffAdjusted + ' is lower than '
                     + portWarnings.join(' and ');
                 emitWarningLog(warnMessage);
             }
@@ -96,13 +96,13 @@ var pool = module.exports = function pool(options, authorizeFn){
 
     function OutputPoolInfo(){
 
-        var startMessage = 'Stratum Pool Server Started for ' + options.coin.name +
+        let startMessage = 'Stratum Pool Server Started for ' + options.coin.name +
             ' [' + options.coin.symbol.toUpperCase() + '] {' + options.coin.algorithm + '}';
         if (process.env.forkId && process.env.forkId !== '0'){
             emitLog(startMessage);
             return;
         }
-        var infoLines = [startMessage,
+        let infoLines = [startMessage,
                 'Network Connected:\t' + (options.testnet ? 'Testnet' : 'Mainnet'),
                 'Detected Reward Type:\t' + options.coin.reward,
                 'Current Block Height:\t' + _this.jobManager.currentJob.rpcData.height,
@@ -123,9 +123,9 @@ var pool = module.exports = function pool(options, authorizeFn){
 
     function OnBlockchainSynced(syncedCallback){
 
-        var checkSynced = function(displayNotSynced){
+        let checkSynced = function(displayNotSynced){
             _this.daemon.cmd('getblocktemplate', [{"capabilities": [ "coinbasetxn", "workid", "coinbase/append" ], "rules": [ "segwit" ]}], function(results){
-                var synced = results.every(function(r){
+                let synced = results.every(function(r){
                     return !r.error || r.error.code !== -10;
                 });
                 if (synced){
@@ -149,22 +149,22 @@ var pool = module.exports = function pool(options, authorizeFn){
         });
 
 
-        var generateProgress = function(){
+        let generateProgress = function(){
 
             _this.daemon.cmd('getinfo', [], function(results) {
-                var blockCount = results.sort(function (a, b) {
+                let blockCount = results.sort(function (a, b) {
                     return b.response.blocks - a.response.blocks;
                 })[0].response.blocks;
 
                 //get list of peers and their highest block height to compare to ours
                 _this.daemon.cmd('getpeerinfo', [], function(results){
 
-                    var peers = results[0].response;
-                    var totalBlocks = peers.sort(function(a, b){
+                    let peers = results[0].response;
+                    let totalBlocks = peers.sort(function(a, b){
                         return b.startingheight - a.startingheight;
                     })[0].startingheight;
 
-                    var percent = (blockCount / totalBlocks * 100).toFixed(2);
+                    let percent = (blockCount / totalBlocks * 100).toFixed(2);
                     emitWarningLog('Downloaded ' + percent + '% of blockchain from ' + peers.length + ' peers');
                 });
 
@@ -215,11 +215,11 @@ var pool = module.exports = function pool(options, authorizeFn){
     }
 
 
-    function SetupVarDiff(){
-        _this.varDiff = {};
+    function SetupletDiff(){
+        _this.letDiff = {};
         Object.keys(options.ports).forEach(function(port) {
-            if (options.ports[port].varDiff)
-                _this.setVarDiff(port, options.ports[port].varDiff);
+            if (options.ports[port].letDiff)
+                _this.setletDiff(port, options.ports[port].letDiff);
         });
     }
 
@@ -227,11 +227,11 @@ var pool = module.exports = function pool(options, authorizeFn){
     /*
     Coin daemons either use submitblock or getblocktemplate for submitting new blocks
      */
-    function SubmitBlock(blockHex, nTime, nonce, solution, headerHash, callback){
+    function SubmitBlock(nTime, nonce, solution, headerHash, callback){
 
 
         //TODO: Invstigate how to switch between these two, use submit for now
-        // var rpcCommand, rpcArgs;
+        // let rpcCommand, rpcArgs;
         // if (options.hasSubmitMethod){
         //     rpcCommand = 'submitblock';
         //     rpcArgs = [blockHex];
@@ -241,15 +241,15 @@ var pool = module.exports = function pool(options, authorizeFn){
         //     rpcArgs = [{'mode': 'submit', 'data': blockHex}];
         // }
 
-        var rpcCommand, rpcArgs;
+        let rpcCommand, rpcArgs;
         rpcCommand = 'submitblock';
         rpcArgs =[nonce, solution, headerHash, nTime];
         
         _this.daemon.cmd(rpcCommand,
             rpcArgs,
             function(results){
-                for (var i = 0; i < results.length; i++){
-                    var result = results[i];
+                for (let i = 0; i < results.length; i++){
+                    let result = results[i];
                     if (result.error) {
                         emitErrorLog('rpc error with daemon instance ' +
                                 result.instance.index + ' when submitting block with ' + rpcCommand + ' ' +
@@ -271,12 +271,12 @@ var pool = module.exports = function pool(options, authorizeFn){
 
 
     function SetupRecipients(){
-        var recipients = [];
+        let recipients = [];
         options.feePercent = 0;
         options.rewardRecipients = options.rewardRecipients || {};
-        for (var r in options.rewardRecipients){
-            var percent = options.rewardRecipients[r];
-            var rObj = {
+        for (let r in options.rewardRecipients){
+            let percent = options.rewardRecipients[r];
+            let rObj = {
                 percent: percent / 100
             };
             try {
@@ -309,15 +309,15 @@ var pool = module.exports = function pool(options, authorizeFn){
         }).on('updatedBlock', function(blockTemplate){
             //Check if stratumServer has been initialized yet
             if (_this.stratumServer) {
-                var job = blockTemplate.getJobParams();
+                let job = blockTemplate.getJobParams();
                 job[13] = true;
                 _this.stratumServer.broadcastMiningJobs(job);
             }
-        }).on('share', function(shareData, blockHex, nTime, nonce, solution, headerHash){
-            var isValidShare = !shareData.error;
-            var isValidBlock = !!blockHex && !!nonce && !!solution;
+        }).on('share', function(shareData, nTime, nonce, solution, headerHash){
+            let isValidShare = !shareData.error;
+            let isValidBlock = !!nonce && !!solution;
             
-            var emitShare = function(){
+            let emitShare = function(){
                 _this.emit('share', isValidShare, isValidBlock, shareData);
             };
 
@@ -332,7 +332,7 @@ var pool = module.exports = function pool(options, authorizeFn){
             if (!isValidBlock)
                 emitShare();
             else{
-                SubmitBlock(blockHex, nTime, nonce, solution, headerHash, function(){
+                SubmitBlock(nTime, nonce, solution, headerHash, function(){
 
                     //RK - Assume block has been accepted
                     //Get the new block template after 0.5 sec
@@ -341,7 +341,7 @@ var pool = module.exports = function pool(options, authorizeFn){
                         isValidBlock = isAccepted;
                         emitShare();
                         
-                        var getBlockTemplateFunction = function(){
+                        let getBlockTemplateFunction = function(){
                             GetBlockTemplate(function(error, result, foundNewBlock){
                                 if (foundNewBlock)
                                     emitLog('Block notification via RPC after block submission');
@@ -387,7 +387,7 @@ var pool = module.exports = function pool(options, authorizeFn){
 
     function DetectCoinData(finishedCallback){
 
-        var batchRpcCalls = [
+        let batchRpcCalls = [
             ['validateaddress', [options.address]],
             ['getdifficulty', []],
             ['getinfo', []],
@@ -401,11 +401,11 @@ var pool = module.exports = function pool(options, authorizeFn){
                 return;
             }
 
-            var rpcResults = {};
+            let rpcResults = {};
 
-            for (var i = 0; i < results.length; i++){
-                var rpcCall = batchRpcCalls[i][0];
-                var r = results[i];
+            for (let i = 0; i < results.length; i++){
+                let rpcCall = batchRpcCalls[i][0];
+                let r = results[i];
                 rpcResults[rpcCall] = r.result || r.error;
 
                 if (rpcCall !== 'submitblock' && (r.error || !r.result)){
@@ -489,8 +489,8 @@ var pool = module.exports = function pool(options, authorizeFn){
             // });
 
         }).on('client.connected', function(client){
-            if (typeof(_this.varDiff[client.socket.localPort]) !== 'undefined') {
-                _this.varDiff[client.socket.localPort].manageClient(client);
+            if (typeof(_this.letDiff[client.socket.localPort]) !== 'undefined') {
+                _this.letDiff[client.socket.localPort].manageClient(client);
             }
 
             client.on('difficultyChanged', function(diff){
@@ -498,8 +498,8 @@ var pool = module.exports = function pool(options, authorizeFn){
 
             }).on('subscription', function(params, resultCallback){
 
-                var extraNonce = _this.jobManager.extraNonceCounter.next();
-                var extraNonce2Size = _this.jobManager.extraNonce2Size;
+                let extraNonce = _this.jobManager.extraNonceCounter.next();
+                let extraNonce2Size = _this.jobManager.extraNonce2Size;
                 resultCallback(null,
                     extraNonce,
                     extraNonce2Size
@@ -515,7 +515,7 @@ var pool = module.exports = function pool(options, authorizeFn){
 
             }).on('submit', function(params, resultCallback){
 
-                var result =_this.jobManager.processShare(
+                let result =_this.jobManager.processShare(
                     params.jobId,
                     client.previousDifficulty,
                     client.difficulty,
@@ -576,7 +576,7 @@ var pool = module.exports = function pool(options, authorizeFn){
             return;
         }
 
-        var pollingInterval = options.blockRefreshInterval;
+        let pollingInterval = options.blockRefreshInterval;
 
         blockPollingIntervalId = setInterval(function () {
             GetBlockTemplate(function(error, result, foundNewBlock){
@@ -597,7 +597,7 @@ var pool = module.exports = function pool(options, authorizeFn){
                         result.instance.index + ' with error ' + JSON.stringify(result.error));
                     callback(result.error);
                 } else {
-                    var processedNewBlock = _this.jobManager.processTemplate(result.response);
+                    let processedNewBlock = _this.jobManager.processTemplate(result.response);
                     callback(null, result.response, processedNewBlock);
                     callback = function(){};
                 }
@@ -636,9 +636,9 @@ var pool = module.exports = function pool(options, authorizeFn){
 
 
     this.relinquishMiners = function(filterFn, resultCback) {
-        var origStratumClients = this.stratumServer.getStratumClients();
+        let origStratumClients = this.stratumServer.getStratumClients();
 
-        var stratumClients = [];
+        let stratumClients = [];
         Object.keys(origStratumClients).forEach(function (subId) {
             stratumClients.push({subId: subId, client: origStratumClients[subId]});
         });
@@ -679,24 +679,24 @@ var pool = module.exports = function pool(options, authorizeFn){
     };
 
 
-    this.setVarDiff = function(port, varDiffConfig) {
-        if (typeof(_this.varDiff[port]) != 'undefined' ) {
-            _this.varDiff[port].removeAllListeners();
+    this.setletDiff = function(port, letDiffConfig) {
+        if (typeof(_this.letDiff[port]) != 'undefined' ) {
+            _this.letDiff[port].removeAllListeners();
         }
-        var varDiffInstance = new varDiff(port, varDiffConfig);
-        _this.varDiff[port] = varDiffInstance;
-        _this.varDiff[port].on('newDifficulty', function(client, newDiff) {
+        let letDiffInstance = new letDiff(port, letDiffConfig);
+        _this.letDiff[port] = letDiffInstance;
+        _this.letDiff[port].on('newDifficulty', function(client, newDiff) {
 
             /* We request to set the newDiff @ the next difficulty retarget
              (which should happen when a new job comes in - AKA BLOCK) */
             client.enqueueNextDifficulty(newDiff);
 
-            /*if (options.varDiff.mode === 'fast'){
+            /*if (options.letDiff.mode === 'fast'){
                  //Send new difficulty, then force miner to use new diff by resending the
                  //current job parameters but with the "clean jobs" flag set to false
                  //so the miner doesn't restart work and submit duplicate shares
                 client.sendDifficulty(newDiff);
-                var job = _this.jobManager.currentJob.getJobParams();
+                let job = _this.jobManager.currentJob.getJobParams();
                 job[8] = false;
                 client.sendMiningJob(job);
             }*/

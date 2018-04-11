@@ -50,7 +50,6 @@ module.exports = function BlockTemplate(
     }
 
     //public members
-
     this.rpcData = rpcData;
     this.jobId = jobId;
     this.headerHash = this.rpcData.headerHash;
@@ -61,83 +60,29 @@ module.exports = function BlockTemplate(
 
     this.difficulty = parseFloat((diff1 / this.target.toNumber()).toFixed(9));
 
-    this.prevHashReversed = util.reverseByteOrder(new Buffer(rpcData.previousblockhash, 'hex')).toString('hex');
-    this.transactionData = Buffer.concat(rpcData.transactions.map(function(tx){
-        return new Buffer(tx.data, 'hex')
-    }));
-    this.merkleTree = new merkleTree(getTransactionBuffers(rpcData.transactions));
-    this.merkleBranch = getMerkleHashes(this.merkleTree.steps);
-    this.generationTransaction = transactions.CreateGeneration(
-        rpcData,
-        poolAddressScript,
-        extraNoncePlaceholder,
-        reward,
-        txMessages,
-        recipients
-    );
+    //AION Block header specialization
+    this.serializeHeader = function(merkleRoot, nTime, nonce){
 
-    this.serializeCoinbase = function(extraNonce1, extraNonce2){
-        return Buffer.concat([
-            this.generationTransaction[0],
-            extraNonce1,
-            extraNonce2,
-            this.generationTransaction[1]
-        ])
+        let header =  new Buffer(72);
+        let position = 0;
+
+        //I - 40 bytes (Partial hash + timestamp), V - 32 bytes
+        header.write(rpcData.partialHash, position, 32, 'hex');
+        header.write(nTime, position+=32, 8, 'hex');
+        header.write(nonce, position+=8, 32, 'hex');
+        return header
     };
 
     //AION Block header specialization
-    this.serializeHeader = function(merkleRoot, nTime, nonce){
-        
-        let header =  new Buffer(528);
-        let position = 0;
-
-        //Serialize header based on equihash H(I || V || ....)
-        //I - 496 bytes, V - 32 bytes 
-        
-        //console.log("Serialize Header nTime: " + nTime)
-
-        header.write(rpcData.blockHeader.parentHash, position+=0, 32, 'hex'); //Parent Hash - 32 bytes
-        header.write(rpcData.blockHeader.coinBase, position+=32, 32, 'hex'); //Coinbase - 32 bytes
-        header.write(rpcData.blockHeader.stateRoot, position+=32, 32, 'hex'); //StateRoot - 32 bytes
-        header.write(rpcData.blockHeader.txTrieRoot, position+=32, 32, 'hex'); //TxTrieRoot - 32 bytes
-        header.write(rpcData.blockHeader.receiptTrieRoot, position+=32, 32, 'hex'); //RecieptTrieRoot - 32 bytes
-        header.write(rpcData.blockHeader.logsBloom, position+=32, 256, 'hex'); //LogsBloom - 256 bytes
-        header.write(rpcData.blockHeader.difficulty, position+=256, 16, 'hex'); //Difficulty - 16 bytes
-        
-        //header.write(rpcData.blockHeader.timestamp, position+=16, 8, 'hex'); //Timestamp - 16 bytes
-        // replace timestamp in blockheader with updated mining timestamp.
-        header.write(nTime, position+=16, 8, 'hex'); //Timestamp - 16 bytes
-        
-        header.write(rpcData.blockHeader.number, position+=8, 8, 'hex'); //Block Number - 8 bytes
-        header.write(rpcData.blockHeader.extraData, position+=8, 32, 'hex'); //ExtraData - 32 bytes
-        header.write(rpcData.blockHeader.energyConsumed, position+=32, 8, 'hex'); //Energy Consumed - 32 bytes
-        header.write(rpcData.blockHeader.energyLimit, position+=8, 8, 'hex'); //Energy Limit - 8 bytes
-        header.write(nonce, position+=8, 32, 'hex'); //Nonce - 32 bytes
-
-        return header
-    }
-
-    //AION Block header specialization
     this.serializeHeaderTarget = function(nonce, soln, nTime){
-        
-        let header = Buffer.alloc(1936);
+
+        let header = Buffer.alloc(1480);
         let position = 0;
-        
-        header.write(rpcData.blockHeader.parentHash, position+=0, 32, 'hex'); //Parent Hash
-        header.write(rpcData.blockHeader.coinBase, position+=32, 32, 'hex'); //Coinbase
-        header.write(rpcData.blockHeader.stateRoot, position+=32, 32, 'hex'); //StateRoot
-        header.write(rpcData.blockHeader.txTrieRoot, position+=32, 32, 'hex'); //TxTrieRoot
-        header.write(rpcData.blockHeader.receiptTrieRoot, position+=32, 32, 'hex'); //RecieptTrieRoot
-        header.write(rpcData.blockHeader.logsBloom, position+=32, 256, 'hex'); //LogsBloom
-        header.write(rpcData.blockHeader.difficulty, position+=256, 16, 'hex');
-        //header.write(rpcData.blockHeader.timestamp, position+=16, 8, 'hex');
-        header.write(nTime, position+=16, 8, 'hex'); //Timestamp - 16 bytes
-        header.write(rpcData.blockHeader.number, position+=8, 8, 'hex'); //Block Number
-        header.write(rpcData.blockHeader.extraData, position+=8, 32, 'hex'); //ExtraData
-        header.write(nonce, position+=32, 32, 'hex'); //Nonce
+
+        header.write(rpcData.partialHash, position, 32, 'hex'); //Partial Hash
+        header.write(nTime, position+=32, 8, 'hex'); //Timestamp
+        header.write(nonce, position+=8, 32, 'hex'); //Nonce
         header.write(soln.slice(6), position+=32, 1408, 'hex'); //Solution
-        header.write(rpcData.blockHeader.energyConsumed, position+=1408, 8, 'hex'); //Energy Consumed
-        header.write(rpcData.blockHeader.energyLimit, position+=8, 8, 'hex'); //Energy Limit
 
         return header
     };
@@ -173,20 +118,9 @@ module.exports = function BlockTemplate(
 
                 //Aion Job Params
                 this.jobId,
-                this.rpcData.blockHeader.parentHash,
-                this.rpcData.blockHeader.coinBase,
-                this.rpcData.blockHeader.stateRoot,
-                this.rpcData.blockHeader.txTrieRoot,
-                this.rpcData.blockHeader.receiptTrieRoot,
-                this.rpcData.blockHeader.logsBloom,
-                this.rpcData.blockHeader.difficulty,
-                this.rpcData.blockHeader.timestamp,
-                this.rpcData.blockHeader.number,
-                this.rpcData.blockHeader.extraData,
-                this.rpcData.blockHeader.energyConsumed,
-                this.rpcData.blockHeader.energyLimit,
                 true,
-                this.rpcData.target
+                this.rpcData.target,
+                this.rpcData.partialHash
             ]
         }
         return this.jobParams

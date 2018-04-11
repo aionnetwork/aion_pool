@@ -19,7 +19,7 @@ let ExtraNonceCounter = function (configInstanceId) {
         return extraNonce.toString('hex');
     };
 
-    this.size = 4; //bytes
+    this.size = 8; //bytes
 };
 
 //Unique job per new block template
@@ -292,7 +292,6 @@ const JobManager = module.exports = function JobManager(options) {
         //     }
         // }
 
-        blockHex = job.serializeBlock(headerBuffer, new Buffer(soln, 'hex')).toString('hex');
         blockHash = util.reverseBuffer(headerHash).toString('hex');
 
         _this.emit('share', {
@@ -309,7 +308,7 @@ const JobManager = module.exports = function JobManager(options) {
             blockHash: completeHeaderHash.toString('hex'),
             blockHashInvalid: blockHashInvalid,
             staticHash: job.rpcData.headerHash
-        }, blockHex, nTime, nonce, new Buffer(soln.slice(6), 'hex').toString('hex'), job.headerHash);
+        }, nTime, nonce, new Buffer(soln.slice(6), 'hex').toString('hex'), job.headerHash);
 
         return {result: true, error: null, blockHash: blockHash};
     };
