@@ -172,12 +172,12 @@ const StratumClient = function (options) {
 
         _this.emit('submit',
             {
-                name: message.params[0],
-                jobId: message.params[1],
-                nTime: message.params[2],
-                extraNonce2: message.params[3],
-                soln: message.params[4],
-                nonce: _this.extraNonce1 + message.params[3]
+                name        : message.params[0],
+                jobId       : message.params[1],
+                nTime       : message.params[2],
+                extraNonce2 : message.params[3],
+                soln        : message.params[4],
+                nonce       : _this.extraNonce1 + message.params[3]
             },
             function (error, result) {
                 if (!considerBan(result)) {
@@ -432,6 +432,7 @@ const StratumServer = exports.Server = function StratumServer(options, authorize
                 }
             }, 1000 * options.banning.purgeInterval);
         }
+
 
 
         //SetupBroadcasting();

@@ -7,28 +7,26 @@ const diff1 = 0x00000000ffff0000000000000000000000000000000000000000000000000000
 /**
  * The BlockTemplate class holds a single job.
  * and provides several methods to validate and submit it to the daemon coin
-**/
-module.exports = function BlockTemplate(
-    jobId,
-    rpcData,
-    poolAddressScript,
-    extraNoncePlaceholder,
-    reward,
-    txMessages,
-    recipients
-){
+ **/
+module.exports = function BlockTemplate(jobId,
+                                        rpcData,
+                                        poolAddressScript,
+                                        extraNoncePlaceholder,
+                                        reward,
+                                        txMessages,
+                                        recipients) {
     //private members
 
     let submits = [];
 
-    function getMerkleHashes(steps){
-        return steps.map(function(step){
+    function getMerkleHashes(steps) {
+        return steps.map(function (step) {
             return step.toString('hex')
         })
     }
 
-    function getTransactionBuffers(txs){
-        let txHashes = txs.map(function(tx){
+    function getTransactionBuffers(txs) {
+        const txHashes = txs.map(function (tx) {
             if (tx.txid !== undefined) {
                 return util.uint256BufferFromHash(tx.txid)
             }
@@ -37,11 +35,11 @@ module.exports = function BlockTemplate(
         return [null].concat(txHashes)
     }
 
-    function getVoteData(){
+    function getVoteData() {
         if (!rpcData.masternode_payments) return new Buffer([]);
 
         return Buffer.concat(
-            [util.letIntBuffer(rpcData.votes.length)].concat(
+            [util.varIntBuffer(rpcData.votes.length)].concat(
                 rpcData.votes.map(function (vt) {
                     return new Buffer(vt, 'hex')
                 })
@@ -50,6 +48,7 @@ module.exports = function BlockTemplate(
     }
 
     //public members
+
     this.rpcData = rpcData;
     this.jobId = jobId;
     this.headerHash = this.rpcData.headerHash;
@@ -60,35 +59,48 @@ module.exports = function BlockTemplate(
 
     this.difficulty = parseFloat((diff1 / this.target.toNumber()).toFixed(9));
 
-    //AION Block header specialization
-    this.serializeHeader = function(merkleRoot, nTime, nonce){
+    this.prevHashReversed = util.reverseByteOrder(new Buffer(rpcData.previousblockhash, 'hex')).toString('hex');
 
-        let header =  new Buffer(72);
+    this.serializeCoinbase = function (extraNonce1, extraNonce2) {
+        return Buffer.concat([
+            this.generationTransaction[0],
+            extraNonce1,
+            extraNonce2,
+            this.generationTransaction[1]
+        ])
+    };
+
+    //AION Block header serialization
+    this.serializeHeader = function (merkleRoot, nTime, nonce) {
+
+        // Double hash serialization header
+
+        const header = new Buffer(72);
         let position = 0;
 
         //I - 40 bytes (Partial hash + timestamp), V - 32 bytes
         header.write(rpcData.partialHash, position, 32, 'hex');
-        header.write(nTime, position+=32, 8, 'hex');
-        header.write(nonce, position+=8, 32, 'hex');
+        header.write(nTime, position += 32, 8, 'hex');
+        header.write(nonce, position += 8, 32, 'hex');
+
         return header
     };
 
     //AION Block header specialization
-    this.serializeHeaderTarget = function(nonce, soln, nTime){
+    this.serializeHeaderTarget = function (nonce, soln, nTime) {
 
-        let header = Buffer.alloc(1480);
+        const header = Buffer.alloc(1480);
         let position = 0;
 
         header.write(rpcData.partialHash, position, 32, 'hex'); //Partial Hash
-        header.write(nTime, position+=32, 8, 'hex'); //Timestamp
-        header.write(nonce, position+=8, 32, 'hex'); //Nonce
-        header.write(soln.slice(6), position+=32, 1408, 'hex'); //Solution
-
+        header.write(nTime, position += 32, 8, 'hex'); //Timestamp
+        header.write(nonce, position += 8, 32, 'hex'); //Nonce
+        header.write(soln.slice(6), position += 32, 1408, 'hex'); //Solution
         return header
     };
 
 
-    this.serializeBlock = function(header, coinbase){
+    this.serializeBlock = function (header, coinbase) {
         return Buffer.concat([
             header,
 
@@ -103,22 +115,22 @@ module.exports = function BlockTemplate(
         ])
     };
 
-    this.registerSubmit = function(extraNonce1, extraNonce2, nTime, nonce){
-        let submission = extraNonce1 + extraNonce2 + nTime + nonce
-        if (submits.indexOf(submission) === -1){
+    this.registerSubmit = function (extraNonce1, extraNonce2, nTime, nonce) {
+        const submission = extraNonce1 + extraNonce2 + nTime + nonce;
+        if (submits.indexOf(submission) === -1) {
             submits.push(submission);
             return true
         }
         return false
     };
 
-    this.getJobParams = function(){
-        if (!this.jobParams){
+    this.getJobParams = function () {
+        if (!this.jobParams) {
             this.jobParams = [
 
                 //Aion Job Params
                 this.jobId,
-                true,
+                true, // Clean job
                 this.rpcData.target,
                 this.rpcData.partialHash
             ]

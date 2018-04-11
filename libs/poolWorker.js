@@ -322,7 +322,7 @@ module.exports = function(logger){
             for (var port in portalConfig.switching[switchName].ports) {
 
                 if (portalConfig.switching[switchName].ports[port].varDiff)
-                    pool.setletDiff(port, portalConfig.switching[switchName].ports[port].varDiff);
+                    pool.setVarDiff(port, portalConfig.switching[switchName].ports[port].varDiff);
 
                 if (portalConfig.switching[switchName].ports[port].diff){
                     if (!pool.options.ports.hasOwnProperty(port)) 
