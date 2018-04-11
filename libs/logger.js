@@ -1,13 +1,21 @@
 const dateFormat = require('dateformat');
+const winston = require('winston');
 const {createLogger, format, transports} = require('winston');
 const {printf} = format;
 require('winston-daily-rotate-file');
 
 const severityValues = {
-    'debug': 1,
-    'warning': 2,
-    'error': 3,
-    'special': 4
+    'debug': 4,
+    'warning': 3,
+    'error': 2,
+    'special': 1
+};
+
+const severityColors = {
+    'debug': 'blue',
+    'warning': 'yellow',
+    'error': 'red',
+    'special': 'red'
 };
 
 const toWinstonLevel = function (level) {
@@ -23,11 +31,10 @@ const toWinstonLevel = function (level) {
 
 module.exports = function (configuration) {
     const logLevelInt = severityValues[configuration.logLevel];
-    const logColors = configuration.logColors;
 
-    const logFormat = printf(info => {
-        return `${info.level}: ${info.message}`;
-    });
+    const logFormat = winston.format.combine(
+        winston.format.printf(info => `${info.level}: ${info.message}`)
+    );
 
     const transport = new (transports.DailyRotateFile)({
         dirname: 'logs',
@@ -42,7 +49,7 @@ module.exports = function (configuration) {
         level: configuration.logLevel,
         format: logFormat,
         transports: [
-            new transports.Console(),
+            new transports.Console({colorize: true}),
             new transports.File({filename: 'logs/error.log', level: 'error'}),
             transport
         ]
@@ -59,18 +66,11 @@ module.exports = function (configuration) {
         }
         let logString,
             entryDesc = dateFormat(new Date(), 'yyyy-mm-dd HH:MM:ss') + ' [' + system + ']\t';
-        if (logColors) {
-            logString = entryDesc + ('[' + component + '] ');
-            if (subcat)
-                logString += ('(' + subcat + ') ');
-            logString += text;
+        logString = entryDesc + '[' + component + '] ';
+        if (subcat) {
+            logString += '(' + subcat + ') ';
         }
-        else {
-            logString = entryDesc + '[' + component + '] ';
-            if (subcat)
-                logString += '(' + subcat + ') ';
-            logString += text
-        }
+        logString += text;
 
         logger.log({
             level: toWinstonLevel(severity),
