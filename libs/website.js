@@ -41,7 +41,8 @@ module.exports = function(logger){
         'workers.html': 'workers',
         'api.html': 'api',
         'admin.html': 'admin',
-        'mining_key.html': 'mining_key'
+        'mining_key.html': 'mining_key',
+        'worker_stats.html': 'worker_stats'
     };
 
     var pageTemplates = {};
@@ -81,7 +82,7 @@ module.exports = function(logger){
             var filePath = 'website/' + (fileName === 'index.html' ? '' : 'pages/') + fileName;
             fs.readFile(filePath, 'utf8', function(err, data){
                 var pTemp = dot.template(data);
-                pageTemplates[pageFiles[fileName]] = pTemp
+                pageTemplates[pageFiles[fileName]] = pTemp;
                 callback();
             });
         }, function(err){
@@ -229,6 +230,24 @@ module.exports = function(logger){
 
     };
 
+    var getWorkerStatsPage = function(workerId) {
+        var workerStats = portalStats.stats.pools.aion.workers[workerId];
+        var page = pageTemplates['worker_stats']({
+            poolsConfigs: poolConfigs,
+            stats: portalStats.stats,
+            portalConfig: portalConfig,
+            workerStats: workerStats,
+            workerName: workerId
+        });
+        return pageTemplates.index({
+            page: page,
+            selected: 'workers',
+            stats: portalStats.stats,
+            poolConfigs: poolConfigs,
+            portalConfig: portalConfig
+        });
+    };
+
 
 
     var app = express();
@@ -247,6 +266,13 @@ module.exports = function(logger){
 
     app.get('/key.html', function(req, res, next){
         res.end(keyScriptProcessed);
+    });
+
+    app.get('/workers/:workerId', function(req, res, next) {
+        var workerId = req.params.workerId;
+        console.log('Getting stats for worker ',  workerId);
+        res.header('Content-Type', 'text/html');
+        res.end(getWorkerStatsPage(workerId));
     });
 
     app.get('/:page', route);
