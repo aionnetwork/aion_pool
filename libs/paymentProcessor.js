@@ -380,7 +380,7 @@ function SetupForPool(logger, minersRewardLogger, poolOptions, setupFinished) {
                                 //TODO:  error management
                             }
                         });
-                        minersRewardLogger.log("Payments were send...");
+                        minersRewardLogger.log("Payments were sent...");
                         callback(null, workers, rounds);
                     });
                 };
