@@ -1,16 +1,19 @@
 const {createLogger, format, transports} = require('winston');
-const {printf} = format;
+const {combine, timestamp, printf} = format;
 
-module.exports = function () {
+module.exports = function (filename) {
     const logFormat = printf(info => {
-        return `${info.message}`;
+        return `${info.timestamp} ${info.message}`;
     });
 
     const logger = createLogger({
         level: 'info',
-        format: logFormat,
+        format: combine(
+            timestamp(),
+            logFormat,
+        ),
         transports: [
-            new transports.File({filename: 'logs/rewards.log', level: 'info'}),
+            new transports.File({filename: filename, level: 'info'}),
         ]
     });
 
