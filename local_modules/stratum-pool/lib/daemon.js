@@ -130,6 +130,10 @@ function DaemonInterface(daemons, logger){
             });
         }
 
+        if(requestJson.length === 0) {
+            return;
+        }
+
         var serializedRequest = JSON.stringify(requestJson);
 
         performHttpRequest(instances[0], serializedRequest, function(error, result){

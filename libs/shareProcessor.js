@@ -1,5 +1,6 @@
 const redis = require('redis');
 const Stratum = require('stratum-pool');
+const RewardLogger = require('./logging/rewardLogger');
 
 
 /*
@@ -17,6 +18,7 @@ module.exports = function (logger, poolConfig) {
 
     const redisConfig = poolConfig.redis;
     const coin = poolConfig.coin.name;
+    const poolRewardLogger = new RewardLogger('logs/pool_rewards.log');
 
 
     const forkId = process.env.forkId;
@@ -83,6 +85,8 @@ module.exports = function (logger, poolConfig) {
         redisCommands.push(['zadd', coin + ':hashrate', dateNow / 1000 | 0, hashrateData.join(':')]);
 
         if (isValidBlock) {
+            poolRewardLogger.log("Received reward for block #" + shareData.height + ": " + shareData.blockReward + " AION");
+
             redisCommands.push(['rename', coin + ':shares:roundCurrent', coin + ':shares:round' + shareData.height]);
             redisCommands.push(['sadd', coin + ':blocksPending', [shareData.blockHash, shareData.blockReward, shareData.height].join(':')]);
             redisCommands.push(['hincrby', coin + ':stats', 'validBlocks', 1]);

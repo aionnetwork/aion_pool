@@ -1,31 +1,31 @@
-var Stratum = require('stratum-pool');
-var redis   = require('redis');
-var net     = require('net');
+const Stratum = require('stratum-pool');
+const redis = require('redis');
+const net = require('net');
 
-var MposCompatibility = require('./mposCompatibility.js');
-var ShareProcessor = require('./shareProcessor.js');
+const MposCompatibility = require('./mposCompatibility.js');
+const ShareProcessor = require('./shareProcessor.js');
 
 module.exports = function(logger){
 
-    var _this = this;
+    const _this = this;
 
-    var poolConfigs  = JSON.parse(process.env.pools);
-    var portalConfig = JSON.parse(process.env.portalConfig);
+    const poolConfigs = JSON.parse(process.env.pools);
+    const portalConfig = JSON.parse(process.env.portalConfig);
 
-    var forkId = process.env.forkId;
-    
-    var pools = {};
+    const forkId = process.env.forkId;
 
-    var proxySwitch = {};
+    const pools = {};
 
-    var redisClient = redis.createClient(portalConfig.redis.port, portalConfig.redis.host);
+    const proxySwitch = {};
+
+    const redisClient = redis.createClient(portalConfig.redis.port, portalConfig.redis.host);
 
     //Handle messages from master process sent via IPC
     process.on('message', function(message) {
         switch(message.type){
 
             case 'banIP':
-                for (var p in pools){
+                for (let p in pools){
                     if (pools[p].stratumServer)
                         pools[p].stratumServer.addBannedIP(message.ip);
                 }
@@ -33,8 +33,8 @@ module.exports = function(logger){
 
             case 'blocknotify':
 
-                var messageCoin = message.coin.toLowerCase();
-                var poolTarget = Object.keys(pools).filter(function(p){
+                const messageCoin = message.coin.toLowerCase();
+                const poolTarget = Object.keys(pools).filter(function (p) {
                     return p.toLowerCase() === messageCoin;
                 })[0];
 
@@ -45,20 +45,20 @@ module.exports = function(logger){
 
             // IPC message for pool switching
             case 'coinswitch':
-                var logSystem = 'Proxy';
-                var logComponent = 'Switch';
-                var logSubCat = 'Thread ' + (parseInt(forkId) + 1);
+                const logSystem = 'Proxy';
+                const logComponent = 'Switch';
+                const logSubCat = 'Thread ' + (parseInt(forkId) + 1);
 
-                var switchName = message.switchName;
+                const switchName = message.switchName;
 
-                var newCoin = message.coin;
+                const newCoin = message.coin;
 
-                var algo = poolConfigs[newCoin].coin.algorithm;
+                const algo = poolConfigs[newCoin].coin.algorithm;
 
-                var newPool = pools[newCoin];
-                var oldCoin = proxySwitch[switchName].currentPool;
-                var oldPool = pools[oldCoin];
-                var proxyPorts = Object.keys(proxySwitch[switchName].ports);
+                const newPool = pools[newCoin];
+                const oldCoin = proxySwitch[switchName].currentPool;
+                const oldPool = pools[oldCoin];
+                const proxyPorts = Object.keys(proxySwitch[switchName].ports);
 
                 if (newCoin == oldCoin) {
                     logger.debug(logSystem, logComponent, logSubCat, 'Switch message would have no effect - ignoring ' + newCoin);
@@ -96,21 +96,24 @@ module.exports = function(logger){
 
     Object.keys(poolConfigs).forEach(function(coin) {
 
-        var poolOptions = poolConfigs[coin];
+        const poolOptions = poolConfigs[coin];
 
-        var logSystem = 'Pool';
-        var logComponent = coin;
-        var logSubCat = 'Thread ' + (parseInt(forkId) + 1);
+        const logSystem = 'Pool';
+        const logComponent = coin;
+        const logSubCat = 'Thread ' + (parseInt(forkId) + 1);
 
-        var handlers = {
-            auth: function(){},
-            share: function(){},
-            diff: function(){}
+        const handlers = {
+            auth: function () {
+            },
+            share: function () {
+            },
+            diff: function () {
+            }
         };
 
         //Functions required for MPOS compatibility
         if (poolOptions.mposMode && poolOptions.mposMode.enabled){
-            var mposCompat = new MposCompatibility(logger, poolOptions);
+            const mposCompat = new MposCompatibility(logger, poolOptions);
 
             handlers.auth = function(port, workerName, password, authCallback){
                 mposCompat.handleAuth(workerName, password, authCallback);
@@ -128,7 +131,7 @@ module.exports = function(logger){
         //Functions required for internal payment processing
         else{
 
-            var shareProcessor = new ShareProcessor(logger, poolOptions);
+            const shareProcessor = new ShareProcessor(logger, poolOptions);
 
             handlers.auth = function(port, workerName, password, authCallback){
                 if (poolOptions.validateWorkerUsername !== true)
@@ -145,7 +148,7 @@ module.exports = function(logger){
                     }
                     else {
                         pool.daemon.cmd('validateaddress', [workerName], function (results) {
-                            var isValid = results.filter(function (r) {
+                            const isValid = results.filter(function (r) {
                                 return r.response.isvalid
                             }).length > 0;
                             authCallback(isValid);
@@ -160,10 +163,10 @@ module.exports = function(logger){
             };
         }
 
-        var authorizeFN = function (ip, port, workerName, password, callback) {
-            handlers.auth(port, workerName, password, function(authorized){
+        const authorizeFN = function (ip, port, workerName, password, callback) {
+            handlers.auth(port, workerName, password, function (authorized) {
 
-                var authString = authorized ? 'Authorized' : 'Unauthorized ';
+                const authString = authorized ? 'Authorized' : 'Unauthorized ';
 
                 logger.debug(logSystem, logComponent, logSubCat, authString + ' ' + workerName + ':' + password + ' [' + ip + ']');
                 callback({
@@ -178,10 +181,7 @@ module.exports = function(logger){
         var pool = Stratum.createPool(poolOptions, authorizeFN, logger);
         pool.on('share', function(isValidShare, isValidBlock, data){
 
-            var shareData = JSON.stringify(data);
-
-            // console.log(data.blockHash);
-            // console.log(!isValidBlock);
+            const shareData = JSON.stringify(data);
 
             if (data.blockHash && !isValidBlock)
                 logger.debug(logSystem, logComponent, logSubCat, 'We thought a block was found but it was rejected by the daemon, share data: ' + shareData);
@@ -222,7 +222,7 @@ module.exports = function(logger){
         var logComponent = 'Setup';
         var logSubCat = 'Thread ' + (parseInt(forkId) + 1);
 
-        var proxyState = {};
+        let proxyState = {};
 
         //
         // Load proxy state for each algorithm from redis which allows NOMP to resume operation
@@ -252,12 +252,12 @@ module.exports = function(logger){
             //
             Object.keys(portalConfig.switching).forEach(function(switchName) {
 
-                var algorithm = portalConfig.switching[switchName].algorithm;
+                const algorithm = portalConfig.switching[switchName].algorithm;
 
                 if (!portalConfig.switching[switchName].enabled) return;
 
 
-                var initalPool = proxyState.hasOwnProperty(algorithm) ? proxyState[algorithm] : _this.getFirstPoolForAlgorithm(algorithm);
+                const initalPool = proxyState.hasOwnProperty(algorithm) ? proxyState[algorithm] : _this.getFirstPoolForAlgorithm(algorithm);
                 proxySwitch[switchName] = {
                     algorithm: algorithm,
                     ports: portalConfig.switching[switchName].ports,
@@ -267,20 +267,20 @@ module.exports = function(logger){
 
 
                 Object.keys(proxySwitch[switchName].ports).forEach(function(port){
-                    var f = net.createServer(function(socket) {
-                        var currentPool = proxySwitch[switchName].currentPool;
+                    const f = net.createServer(function (socket) {
+                        const currentPool = proxySwitch[switchName].currentPool;
 
                         logger.debug(logSystem, 'Connect', logSubCat, 'Connection to '
                             + switchName + ' from '
                             + socket.remoteAddress + ' on '
                             + port + ' routing to ' + currentPool);
-                        
+
                         if (pools[currentPool])
                             pools[currentPool].getStratumServer().handleNewClient(socket);
                         else
                             pools[initalPool].getStratumServer().handleNewClient(socket);
 
-                    }).listen(parseInt(port), function() {
+                    }).listen(parseInt(port), function () {
                         logger.debug(logSystem, logComponent, logSubCat, 'Switching "' + switchName
                             + '" listening for ' + algorithm
                             + ' on port ' + port
@@ -293,7 +293,7 @@ module.exports = function(logger){
         });
     }
     this.getFirstPoolForAlgorithm = function(algorithm) {
-        var foundCoin = "";
+        let foundCoin = "";
         Object.keys(poolConfigs).forEach(function(coinName) {
             if (poolConfigs[coinName].coin.algorithm == algorithm) {
                 if (foundCoin === "")
@@ -314,12 +314,12 @@ module.exports = function(logger){
         Object.keys(portalConfig.switching).forEach(function(switchName) {
             if (!portalConfig.switching[switchName].enabled) return;
 
-            var switchAlgo = portalConfig.switching[switchName].algorithm;
+            const switchAlgo = portalConfig.switching[switchName].algorithm;
             if (pool.options.coin.algorithm !== switchAlgo) return;
 
             // we know the switch configuration matches the pool's algo, so setup the diff and 
             // vardiff for each of the switch's ports
-            for (var port in portalConfig.switching[switchName].ports) {
+            for (let port in portalConfig.switching[switchName].ports) {
 
                 if (portalConfig.switching[switchName].ports[port].varDiff)
                     pool.setVarDiff(port, portalConfig.switching[switchName].ports[port].varDiff);
