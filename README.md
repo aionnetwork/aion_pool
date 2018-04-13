@@ -57,12 +57,18 @@ In order to debug locally, insert $NODE_DEBUG_OPTION in *scripts* in package.jso
 
 
 ## Requirements (building from source)
+
+### Software
 * **Aion kernel** ([download and install](https://github.com/aionnetwork/aion))
 * **Node.js** v8.9.3+ ([download and install](https://nodejs.org/en/download/))
 * **Redis** key-value store v2.6+ ([download and install](http://redis.io/topics/quickstart))
 * **Python v2.7**
 * **make**
 * **node-gyp** v3.6.2+ ([download and install](https://github.com/nodejs/node-gyp))
+### Hardware
+An instance of the pool will use about 100 MB RAM and 1 CPU core with 3 threads, but CPU usage is negligible.
+
+This will scale together with the number of miners. Optimal requirements will be later determined.
 
 ## Setup
 
