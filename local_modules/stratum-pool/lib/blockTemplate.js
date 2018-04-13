@@ -75,13 +75,12 @@ module.exports = function BlockTemplate(jobId,
 
         // Double hash serialization header
 
-        const header = new Buffer(72);
+        const header = new Buffer(64);
         let position = 0;
 
-        //I - 40 bytes (Partial hash + timestamp), V - 32 bytes
-        header.write(rpcData.partialHash, position, 32, 'hex');
-        header.write(nTime, position += 32, 8, 'hex');
-        header.write(nonce, position += 8, 32, 'hex');
+        //I - 32 bytes (HeaderHash), V - 32 bytes
+        header.write(rpcData.headerHash, position, 32, 'hex');
+        header.write(nonce, position+=32, 32, 'hex');
 
         return header
     };
@@ -89,13 +88,12 @@ module.exports = function BlockTemplate(jobId,
     //AION Block header specialization
     this.serializeHeaderTarget = function (nonce, soln, nTime) {
 
-        const header = Buffer.alloc(1480);
+        const header = Buffer.alloc(1472);
         let position = 0;
 
-        header.write(rpcData.partialHash, position, 32, 'hex'); //Partial Hash
-        header.write(nTime, position += 32, 8, 'hex'); //Timestamp
-        header.write(nonce, position += 8, 32, 'hex'); //Nonce
-        header.write(soln.slice(6), position += 32, 1408, 'hex'); //Solution
+        header.write(rpcData.headerHash, position, 32, 'hex'); //Partial Hash
+        header.write(nonce, position+=32, 32, 'hex'); //Nonce
+        header.write(soln.slice(6), position+=32, 1408, 'hex'); //Solution
         return header
     };
 
@@ -132,7 +130,7 @@ module.exports = function BlockTemplate(jobId,
                 this.jobId,
                 true, // Clean job
                 this.rpcData.target,
-                this.rpcData.partialHash
+                this.rpcData.headerHash
             ]
         }
         return this.jobParams

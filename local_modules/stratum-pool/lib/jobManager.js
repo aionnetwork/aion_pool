@@ -310,14 +310,14 @@ const JobManager = module.exports = function JobManager(options) {
             port: port,
             worker: workerName,
             height: job.rpcData.height,
-            blockReward: getBlockReward(job.rpcData.height),
+            blockReward: job.rpcData.reward,
             difficulty: difficulty,
             shareDiff: shareDiff.toFixed(8),
             blockDiff: blockDiffAdjusted,
             blockDiffActual: job.difficulty,
             blockHash: completeHeaderHash.toString('hex'),
             blockHashInvalid: blockHashInvalid,
-            staticHash: job.rpcData.headerHash
+            headerHash: job.rpcData.headerHash
         }, nTime, nonce, new Buffer(soln.slice(6), 'hex').toString('hex'), job.headerHash);
 
         return {result: true, error: null, blockHash: blockHash};
