@@ -310,7 +310,7 @@ const JobManager = module.exports = function JobManager(options) {
             port: port,
             worker: workerName,
             height: job.rpcData.height,
-            blockReward: job.rpcData.reward,
+            blockReward: getBlockReward(job.rpcData.height),
             difficulty: difficulty,
             shareDiff: shareDiff.toFixed(8),
             blockDiff: blockDiffAdjusted,
