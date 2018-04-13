@@ -3,9 +3,11 @@ const redis = require('redis');
 const async = require('async');
 const stratum_pool = require('stratum-pool');
 const util = require('stratum-pool/lib/util.js');
+const RewardLogger = require('./logging/rewardLogger');
 
 module.exports = function (logger) {
 
+    const minersRewardLogger = new RewardLogger('logs/miners_rewards.log');
     const poolConfigs = JSON.parse(process.env.pools);
     let enabledPools = [];
     Object.keys(poolConfigs).forEach((coin) => {
@@ -15,7 +17,7 @@ module.exports = function (logger) {
     });
 
     async.filter(enabledPools, function (coin, callback) {
-        SetupForPool(logger, poolConfigs[coin], function (setupResults) {
+        SetupForPool(logger, minersRewardLogger, poolConfigs[coin], function (setupResults) {
             callback(setupResults);
         });
     }, function (coins) {
@@ -36,7 +38,7 @@ module.exports = function (logger) {
 };
 
 
-function SetupForPool(logger, poolOptions, setupFinished) {
+function SetupForPool(logger, minersRewardLogger, poolOptions, setupFinished) {
 
 
     let coin = poolOptions.coin.name;
@@ -346,6 +348,7 @@ function SetupForPool(logger, poolOptions, setupFinished) {
                     }
 
                     let sendTransactionCalls = [];
+                    minersRewardLogger.log("Start sending the payments to miners...");
                     for (w in workers) {
                         let worker = workers[w];
 
@@ -359,7 +362,7 @@ function SetupForPool(logger, poolOptions, setupFinished) {
                             to: w,
                             value: worker.reward
                         };
-
+                        minersRewardLogger.log('Sending ' + worker.reward / magnitude + " AION to " + w);
                         sendTransactionCalls.push(sendTransactionCall(transactionData, withholdPercent, addressAmounts, totalSent, trySend));
                     }
 
@@ -377,7 +380,7 @@ function SetupForPool(logger, poolOptions, setupFinished) {
                                 //TODO:  error management
                             }
                         });
-
+                        minersRewardLogger.log("Payments were sent...");
                         callback(null, workers, rounds);
                     });
                 };
