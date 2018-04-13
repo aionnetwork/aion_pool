@@ -214,6 +214,11 @@ used to send the pool fees into during the payment processing. This can be confi
 
 > The same ideas like from the miner apply when choosing the mining pool operator address(ses) type.
 
+### Security recommendation
+* Open only configured ports for Stratum and the UI 
+* Use a service (like CloudFlare) to protect the server against DDoS attacks
+ 
+
 License
 -------
 Released under the GNU General Public License v2
