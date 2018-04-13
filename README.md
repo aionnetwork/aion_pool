@@ -196,15 +196,13 @@ At this stage the mining pool is ready to receive client connections and to dist
 
 As a miner the following possibilities can be taken into account:
 * personal hot wallet -  if mining for the purpose of staking/hodling the coins short or medium term, the miner can use 
-a personal wallet like: Jaxx, Exodus, Coinbase, etc.
+a personal wallet like: AION wallet or other which might support AION in the future
 * exchange - if mining for the purpose of automatically selling the coins the best options is to use an exchange and 
 directly sell your coins
 * cold wallet - if mining for the purpose of staking/hodling the coins long term, the miner's best choice is the use of 
 a cold wallet
-    * paper wallet  
-    * trezor
-    * ledger
-    * keepkey
+    * paper wallet
+    * USB wallet
 
 ### Mining pool operator
 
