@@ -41,7 +41,8 @@ module.exports = function(logger){
         'workers.html': 'workers',
         'api.html': 'api',
         'admin.html': 'admin',
-        'mining_key.html': 'mining_key'
+        'mining_key.html': 'mining_key',
+        'worker_stats.html': 'worker_stats'
     };
 
     var pageTemplates = {};
@@ -81,7 +82,7 @@ module.exports = function(logger){
             var filePath = 'website/' + (fileName === 'index.html' ? '' : 'pages/') + fileName;
             fs.readFile(filePath, 'utf8', function(err, data){
                 var pTemp = dot.template(data);
-                pageTemplates[pageFiles[fileName]] = pTemp
+                pageTemplates[pageFiles[fileName]] = pTemp;
                 callback();
             });
         }, function(err){
@@ -219,7 +220,7 @@ module.exports = function(logger){
     };
 
     var route = function(req, res, next){
-        var pageId = req.params.page || '';
+        var pageId = req.params.page || 'getting_started';
         if (pageId in indexesProcessed){
             res.header('Content-Type', 'text/html');
             res.end(indexesProcessed[pageId]);
@@ -227,6 +228,24 @@ module.exports = function(logger){
         else
             next();
 
+    };
+
+    var getWorkerStatsPage = function(workerId) {
+        var workerStats = portalStats.stats.pools.aion.workers[workerId];
+        var page = pageTemplates['worker_stats']({
+            poolsConfigs: poolConfigs,
+            stats: portalStats.stats,
+            portalConfig: portalConfig,
+            workerStats: workerStats,
+            workerName: workerId
+        });
+        return pageTemplates.index({
+            page: page,
+            selected: 'workers',
+            stats: portalStats.stats,
+            poolConfigs: poolConfigs,
+            portalConfig: portalConfig
+        });
     };
 
 
@@ -237,7 +256,7 @@ module.exports = function(logger){
     app.use(bodyParser.json());
 
     app.get('/get_page', function(req, res, next){
-        var requestedPage = getPage(req.query.id);
+        var requestedPage = getPage(req.query.id || 'getting_started');
         if (requestedPage){
             res.end(requestedPage);
             return;
@@ -247,6 +266,13 @@ module.exports = function(logger){
 
     app.get('/key.html', function(req, res, next){
         res.end(keyScriptProcessed);
+    });
+
+    app.get('/workers/:workerId', function(req, res, next) {
+        var workerId = req.params.workerId;
+        console.log('Getting stats for worker ',  workerId);
+        res.header('Content-Type', 'text/html');
+        res.end(getWorkerStatsPage(workerId));
     });
 
     app.get('/:page', route);
