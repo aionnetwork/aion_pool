@@ -4,12 +4,11 @@
     "coin": "aion.json",
     "address": "0xa0aef3696d14a5e1f5e2d33b65508bffe69f4cd770a8e3d85f5205cc16fb2516",
     "addressPassword": "asd",
-
-    "__rewardRecipients": "total in percentage is the pool fee charged, (rewardRecipients[0] + rewardRecipients[1] + ...)%",
-    "reward" : 1.5,
+    "__rewardRecipients": "total in percentage (0.1 = 10% fee, 0.01 = 1% fee, etc) is the pool fee charged, (rewardRecipients[0] + rewardRecipients[1] + ...)%",
     "rewardRecipients": {
         "0xa05e9785c15bbc5287e847f945c088fb01e34b6a86694cee474493fb8208a86f": 0.1
     },
+
     "paymentProcessing": {
         "enabled": true,
         "paymentInterval": 10,
