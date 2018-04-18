@@ -1,0 +1,104 @@
+<style>
+
+    #topCharts {
+        padding: 18px;
+    }
+
+    #topCharts > div > div > svg {
+        display: block;
+        height: 280px;
+    }
+
+    .worker-link {
+        cursor: pointer;
+    }
+
+    .worker-link:hover {
+        text-decoration: underline;
+    }
+
+    table {
+        width: 100%;
+    }
+
+    #inputContainer {
+        position:relative;
+        padding: 0;
+        margin: 0 auto 20px;
+        width: 300px;
+    }
+    #input {
+        height:25px;
+        width: 100%;
+        margin:0;
+        padding: 5px 30px 5px 5px;
+        border: 1px solid black;
+        border-radius: 4px;
+    }
+    #inputIcon {
+        position:absolute;
+        bottom:10px;
+        left:calc(100% + 10px);
+        width:14px;
+        height:14px;
+    }
+    #inputIcon:hover {
+        cursor: pointer;
+    }
+
+</style>
+<div id="topCharts">
+
+{{ for(var pool in it.stats.pools) { }}
+
+        <div class="chartHolder">
+            <div id="inputContainer">
+                <input id="input" type="text" value>
+                <i id="inputIcon" class="fa fa-search"></i>
+            </div>
+            <table class="pure-table">
+                <thead>
+                <tr>
+                    <th>Address</th>
+                    <th>Shares</th>
+                    <th>Invalid shares</th>
+                    <th>Efficiency</th>
+                    <th>Hashrate</th>
+                </tr>
+                </thead>
+                {{ for(var worker in it.stats.pools[pool].workers) { }}
+                   {{var workerstat = it.stats.pools[pool].workers[worker];}}
+                    <tr class="pure-table-odd">
+                        <td class="worker-link">{{=worker}}</td>
+                        <td>{{=Math.floor(workerstat.shares)}}</td>
+                        <td>{{=Math.floor(workerstat.invalidshares)}}</td>
+                        <td>{{? workerstat.shares > 0}} {{=Math.floor(10000 * workerstat.shares / (workerstat.shares + workerstat.invalidshares)) / 100}}% {{??}} 0% {{?}}</td>
+                        <td>{{=workerstat.hashrateString}}</td>
+                    </tr>
+                {{ } }}
+            </table>
+    </div>
+</div>
+{{ } }}
+<script>
+    $(function(){
+        $('#inputIcon').click(function(event){
+            const searchText = $('#input').val();
+            console.log(searchText);
+            window.location.href = '/workers/' + searchText;
+        });
+
+        $('#input').keyup(function(event){
+
+            if (event.keyCode !== 13) {
+                return;
+            }
+            const searchText = $('#input').val();
+            window.location.href = '/workers/' + searchText;
+        });
+        $('.worker-link').click(function(event) {
+            const workerHash = event.target.innerHTML;
+            window.location.href = '/workers/' + workerHash;
+        })
+    });
+</script>

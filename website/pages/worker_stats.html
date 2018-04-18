@@ -1,0 +1,94 @@
+<style>
+    .container {
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        justify-content: space-around;
+        align-items: center;
+        align-content: flex-start;
+    }
+
+    .page-content {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        background: #2d2d2d;
+        padding-top: 50px;
+        align-items: center;
+    }
+
+    .hashrate-container, .shares-container, .invalid-shares-container {
+        width: 200px;
+        height: 200px;
+    }
+
+    .hashrate-container {
+        border: 1px solid #df691a;
+    }
+
+    .shares-container {
+        border: 1px solid #5cb85c;
+    }
+
+    .invalid-shares-container {
+        border: 1px solid #d9534f;
+    }
+
+    .info-header, .info-content{
+        display: flex;
+        flex-direction: column;
+        justify-content: space-around;
+        align-items: center;
+        color: #ced4d9;
+    }
+    h3 {
+        color: #ced4d9;
+    }
+    .hashrate-container, .shares-container, .invalid-shares-container {
+        background: #3e3e3e;
+    }
+
+    .info-header {
+        height: 50px;
+    }
+    .info-content {
+        height: calc(100% - 50px);
+    }
+
+    .hashrate-container > .info-header {
+        background: #df691a;
+    }
+    .shares-container > .info-header {
+        background: #5cb85c;
+    }
+    .invalid-shares-container > .info-header {
+        background: #d9534f;
+    }
+
+</style>
+<div class="page-content">
+    <h3>Stats for {{=it.workerName}}</h3>
+    <div class="container">
+        <div class="hashrate-container">
+            <div class="info-header">Hashrate</div>
+            {{if (it.workerStats) { }}
+            <div class="info-content">{{=it.workerStats.hashrateString}}</div>
+            {{ } }}
+        </div>
+        <div class="shares-container">
+            <div class="info-header">Shares</div>
+            {{if (it.workerStats) { }}
+            <div class="info-content">{{=it.workerStats.shares}}</div>
+            {{ } }}
+        </div>
+        <div class="invalid-shares-container">
+            <div class="info-header">Invalid shares</div>
+            {{if (it.workerStats) { }}
+            <div class="info-content">
+                {{=it.workerStats.invalidshares}}
+            </div>
+            {{ } }}
+        </div>
+    </div>
+</div>

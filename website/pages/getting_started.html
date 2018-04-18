@@ -1,0 +1,57 @@
+<style>
+    #holder{
+        display: flex;
+        flex-direction: row;
+    }
+
+    .instruction-block > p:first-child {
+        margin-top: 20px;
+
+    }
+    p, h4 {
+        color: #2d2d2d;
+    }
+    .instruction-block > p {
+        margin: 10px 0;
+    }
+    .code {
+        padding: 0.2em 0.4em;
+        margin: 0;
+        font-size: 85%;
+        background: #d0d6e0;
+        border-radius: 3px;
+    }
+
+    #holder {
+        padding: 30px;
+    }
+</style>
+
+<div id="holder">
+
+    <div id="main">
+        <div class="instruction-block">
+            <h4>Prerequisites</h4>
+            <ul>
+                <li><a href="https://www.ubuntu.com/download" target="_blank">Ubuntu 16.04 or higher</a></li>
+                <li><a href="https://medium.com/@shaaslam/how-to-install-oracle-java-9-in-ubuntu-16-04-671e598f0116"
+                       target="_blank">Java 9 installed</a></li>
+            </ul>
+        </div>
+        <div class="instruction-block">
+            <h4>Setting up your AION address</h4>
+            <p>1. Download the latest AION kernel release from the <a href="https://github.com/aionnetwork/aion/releases"
+            target="_blank">official github repository</a> and unpack the archive</p>
+            <p>2. Navigate to the AION kernel folder and run <span class="code">./aion.sh -a create</span> to create a new address.</p>
+            <p>3. Your keystore file which holds your private key will be saved in the
+                <span class="code">/aion/keystore</span> folder. Save it somewhere secure along with your public key.</p>
+        </div>
+        <div class="instruction-block">
+            <h4>Starting to mine</h4>
+            <p>1. Download the latest AION miner from the <a href="https://github.com/aionnetwork/aion_miner/releases"
+                 target="_blank">official github repository</a></p>
+            <p>2. Run the <span class="code">aionminer</span> executable specifying the pool address
+                <span class="code">--location pool.centrys.io:3332</span></p>
+        </div>
+    </div>
+</div>
