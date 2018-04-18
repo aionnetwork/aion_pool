@@ -9,6 +9,14 @@
         height: 280px;
     }
 
+    .worker-link {
+        cursor: pointer;
+    }
+
+    .worker-link:hover {
+        text-decoration: underline;
+    }
+
     table {
         width: 100%;
     }
@@ -61,7 +69,7 @@
                 {{ for(var worker in it.stats.pools[pool].workers) { }}
                    {{var workerstat = it.stats.pools[pool].workers[worker];}}
                     <tr class="pure-table-odd">
-                        <td>{{=worker}}</td>
+                        <td class="worker-link">{{=worker}}</td>
                         <td>{{=Math.floor(workerstat.shares)}}</td>
                         <td>{{=Math.floor(workerstat.invalidshares)}}</td>
                         <td>{{? workerstat.shares > 0}} {{=Math.floor(10000 * workerstat.shares / (workerstat.shares + workerstat.invalidshares)) / 100}}% {{??}} 0% {{?}}</td>
@@ -75,7 +83,7 @@
 <script>
     $(function(){
         $('#inputIcon').click(function(event){
-            var searchText = $('#input').val();
+            const searchText = $('#input').val();
             console.log(searchText);
             window.location.href = '/workers/' + searchText;
         });
@@ -85,8 +93,12 @@
             if (event.keyCode !== 13) {
                 return;
             }
-            var searchText = $('#input').val();
+            const searchText = $('#input').val();
             window.location.href = '/workers/' + searchText;
         });
+        $('.worker-link').click(function(event) {
+            const workerHash = event.target.innerHTML;
+            window.location.href = '/workers/' + workerHash;
+        })
     });
 </script>
