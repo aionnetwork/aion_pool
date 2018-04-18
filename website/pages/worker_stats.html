@@ -86,9 +86,7 @@
             <div class="info-header">Invalid shares</div>
             {{if (it.workerStats) { }}
             <div class="info-content">
-                {{if (it.workerStats.invalidShares) { }}
-                    {{=it.workerStats.hashrateString}}
-                {{ } }}
+                {{=it.workerStats.invalidshares}}
             </div>
             {{ } }}
         </div>
