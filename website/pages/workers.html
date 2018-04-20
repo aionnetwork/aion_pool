@@ -63,7 +63,7 @@
                     <th>Valid Shares</th>
                     <th>Invalid shares</th>
                     <th>Efficiency</th>
-                    <th>Hashrate</th>
+                    
                 </tr>
                 </thead>
                 {{ for(var worker in it.stats.pools[pool].workers) { }}
@@ -73,7 +73,7 @@
                         <td>{{=Math.floor(workerstat.shares)}}</td>
                         <td>{{=Math.floor(workerstat.invalidshares)}}</td>
                         <td>{{? workerstat.shares > 0}} {{=Math.floor(10000 * workerstat.shares / (workerstat.shares + workerstat.invalidshares)) / 100}}% {{??}} 0% {{?}}</td>
-                        <td>{{=workerstat.hashrateString}}</td>
+                        
                     </tr>
                 {{ } }}
             </table>

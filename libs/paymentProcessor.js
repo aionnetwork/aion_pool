@@ -365,12 +365,13 @@ function SetupForPool(logger, minersRewardLogger, poolOptions, setupFinished) {
                         minersRewardLogger.log('Sending ' + worker.reward / magnitude + " AION to " + w);
                         sendTransactionCalls.push(sendTransactionCall(transactionData, withholdPercent, addressAmounts, totalSent, trySend));
                     }
-
-                    if (sendTransactionCalls.length > 0) {
-                        getTransactionDatasForPoolOps(totalRewardBeforeWitholds).forEach(function (element) {
-                            sendTransactionCalls.push(sendTransactionCall(element, withholdPercent, addressAmounts, totalSent, trySend));
-                        });
-                    }
+                    // for A0 pool, we are only charging fee to cover transactions costs to recipients. 
+                    // don't do payouts to any pool operators listed in the config 
+                    //if (sendTransactionCalls.length > 0) {
+                    //    getTransactionDatasForPoolOps(totalRewardBeforeWitholds).forEach(function (element) {
+                    //        sendTransactionCalls.push(sendTransactionCall(element, withholdPercent, addressAmounts, totalSent, trySend));
+                    //    });
+                    //}
 
                     async.parallel(sendTransactionCalls, function (err, transactions) {
                         logger.debug(logSystem, logComponent, 'Sent out a total of ' + (totalSent / magnitude)

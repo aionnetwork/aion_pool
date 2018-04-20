@@ -6,7 +6,7 @@ function ctrl_c() {
         echo
         echo -e "\e[31mShutting down aion_solo__pool"
         echo
-        kill -9 `pgrep redis-server`
+#        kill -9 `pgrep redis-server`
 }
 
 echo -e "\e[32mStarting aion_solo_pool."
