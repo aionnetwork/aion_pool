@@ -69,13 +69,14 @@ function buildChartData(){
 }
 
 function getReadableHashRateString(hashrate){
-    var i = -1;
-    var byteUnits = [ ' KH', ' MH', ' GH', ' TH', ' PH' ];
-    do {
-        hashrate = hashrate / 1024;
-        i++;
-    } while (hashrate > 1024);
-    return Math.round(hashrate) + byteUnits[i];
+    hashrate = (hashrate * 2);
+    if (hashrate < 1000000) {
+        return (Math.round(hashrate / 1000) / 1000 ).toFixed(2)+' Sol/s';
+    }
+    var byteUnits = [ ' Sol/s', ' KSol/s', ' MSol/s', ' GSol/s', ' TSol/s', ' PSol/s' ];
+    var i = Math.floor((Math.log(hashrate/100000) / Math.log(1000)) - 1) || 0;
+    hashrate = (hashrate/100000) / Math.pow(1000, i + 1);
+    return hashrate.toFixed(2) + byteUnits[i];
 }
 
 function timeOfDayFormat(timestamp){
@@ -106,7 +107,7 @@ function displayCharts(){
 
     nv.addGraph(function() {
         poolHashrateChart = nv.models.lineChart()
-            .margin({left: 60, right: 40})
+            .margin({left: 100, right: 40})
             .x(function(d){ return d[0] })
             .y(function(d){ return d[1] })
             .useInteractiveGuideline(true);
