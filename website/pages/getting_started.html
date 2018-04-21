@@ -3,55 +3,91 @@
         display: flex;
         flex-direction: row;
     }
-
-    .instruction-block > p:first-child {
-        margin-top: 20px;
-
-    }
     p, h4 {
         color: #2d2d2d;
-    }
-    .instruction-block > p {
-        margin: 10px 0;
     }
     .code {
         padding: 0.2em 0.4em;
         margin: 0;
-        font-size: 85%;
+        font-weight: 600;
+        font-size: 95%;
         background: #d0d6e0;
-        border-radius: 3px;
+        border-radius: 1px;
     }
-
     #holder {
         padding: 30px;
     }
 </style>
 
 <div id="holder">
-
     <div id="main">
-        <div class="instruction-block">
-            <h4>Prerequisites</h4>
-            <ul>
-                <li><a href="https://www.ubuntu.com/download" target="_blank">Ubuntu 16.04 or higher</a></li>
-                <li><a href="https://medium.com/@shaaslam/how-to-install-oracle-java-9-in-ubuntu-16-04-671e598f0116"
-                       target="_blank">Java 9 installed</a></li>
-            </ul>
+        <div style="text-align: center; font-size: 24px; padding-bottom: 35px; padding-top: 15px;">
+            Getting Started | Aion Mining Pool
         </div>
         <div class="instruction-block">
-            <h4>Setting up your AION address</h4>
-            <p>1. Download the latest AION kernel release from the <a href="https://github.com/aionnetwork/aion/releases"
-            target="_blank">official github repository</a> and unpack the archive</p>
-            <p>2. Navigate to the AION kernel folder and run <span class="code">./aion.sh -a create</span> to create a new address.</p>
-            <p>3. Your keystore file which holds your private key will be saved in the
-                <span class="code">/aion/keystore</span> folder. Save it somewhere secure along with your public key.</p>
+            <h3>Pool Stratum Url</h3>
+            <p style="margin: 8px 0 8px 20px;"><span class="code" style="font-size: 16px"> pool.aion.network:3333</span></p>
         </div>
         <div class="instruction-block">
-            <h4>Starting to mine</h4>
-            <p>1. Download the latest AION miner from the <a href="https://github.com/aionnetwork/aion_miner/releases"
-                 target="_blank">official github repository</a></p>
-            <p>2. Run the <span class="code">aionminer</span> executable specifying the pool address
-                <span class="code">--location pool.centrys.io:3332</span></p>
+            <h3>Pool Structure, Fees and Payouts</h3>
+            
+            <h4 style="margin-bottom: 15px;">Pool Structure</h4>
+            <p style="margin: 8px 0 8px 8px;">1. This pool uses a simple <b>Pay-Per-Successful-Share</b> model (a share is defined as an Equi2109 solution that meets current network difficulty target): all pool participants mine at the network difficulty; when a miner submits a valid block (that meets current difficulty target) and that block becomes a mainchain block, the miner who proposed that block gets block reward (minus transaction costs)</p>
+
+            <h4 style="margin-bottom: 15px;">Fees</h4>
+            <p style="margin: 8px 0 8px 8px;">1. This pool charges <b>a fee of 0.01% / payout</b>, to cover the transactions costs. This pool is intended to serve as a community utility (not for profit), therefore the fee will kept at a level so as to only cover payout transaction costs.</p>
+
+            <h4 style="margin-bottom: 15px;">Payouts</h4>
+            <p style="margin: 8px 0 8px 8px;">1. This pool has <b>a minimum payout of 0.1 Aion Coin / payout</b>.</p>
+            <p style="margin: 8px 0 8px 8px;">2. <b>Payouts occur every 10s</b>, to distribute mining rewards as fast as possible.</p>
+        </div>
+        
+        <hr style="margin-top: 30px; margin-bottom: 25px;"/>
+
+        <div class="instruction-block">
+            <h3>Getting an Aion Address</h3>
+            <div style="margin-left: 20px;">
+                <h4 style="margin-bottom: 15px;">Using Kernel Binary (Most Secure)</h4>
+                <p style="margin: 8px 0 8px 8px;">1. Download the latest Aion kernel release from the <a href="https://github.com/aionnetwork/aion/releases"
+                target="_blank">official github repository</a> and unpack the archive</p>
+                <p style="margin: 8px 0 8px 8px;">2. Navigate to the Aion kernel folder and run <span class="code">./aion.sh -a create</span> to create a new address.</p>
+                <p style="margin: 8px 0 8px 8px;">3. Your keystore file which holds your private key will be saved in the
+                    <span class="code">/aion/keystore</span> folder. Save it somewhere secure along with your public key.</p>
+            </div>
+            <div style="margin-left: 20px;">
+                <h4 style="margin-bottom: 15px;">Using Hosted Wallet</h4>
+                <p style="margin: 8px 0 8px 8px;">1. Go to the hosted Aion wallet application at <a href="https://wallet.aion.network"
+                target="_blank">wallet.aion.network</a></p>
+                <p style="margin: 8px 0 8px 8px;">2. Select a password and follow the instructions to generate your keystore file.</p>
+                <p style="margin: 8px 0 8px 8px;">3. Save your keystore file (which holds your private key) somewhere secure, along with your public key.</p>
+            </div>
+        </div>
+
+        <hr style="margin-top: 30px; margin-bottom: 25px;"/>
+
+        <div class="instruction-block">
+            <h3>Setting Up A Miner</h3>
+
+            <div style="margin: 8px 0 8px 8px;">This following are miner reference implementations maintained by Aion Foundation. Community members have been working on their own miner implementations; see <a href="https://forum.aion.network" target="_blank">forum.aion.network</a> for other available miner implementations.</div>
+            <div style="margin-left: 20px;">
+                <h4 style="margin-bottom: 15px;">Prerequisites</h4>
+                <p style="margin: 8px 0 8px 8px;">1. You'll need to be running <a href="https://www.ubuntu.com/desktop" target="_blank">Ubuntu 16.04 LTS</a>. Non LTS versions (> 16.04) may require addional packages that Canonical removed from their default ppas</p>
+            </div>
+
+            <div style="margin-left: 20px;">
+                <h4 style="margin-bottom: 15px;">Nvidia CUDA Miner</h4>
+                <p style="margin: 8px 0 8px 8px;">1. Download the latest miner build from the <a href="https://github.com/aionnetwork/aion_miner/releases" target="_blank">official github repository</a></p>
+                <p style="margin: 8px 0 8px 8px;">2. Make sure you have the appropriate drivers to run the miner depending on your card.</p>
+                <p style="margin: 8px 0 8px 8px;">3. Run the aionminer executable, specifying the <b>pool's stratum url</b> (using -l) and your <b>rewards address</b> (using -u) where you will recieve your payouts:</p>
+                <p style="margin: 8px 0 8px 20px;"><span class="code">./aionminer -l pool.aion.network:3333 -u {rewards_address}</span></p>
+            </div>
+
+            <div style="margin-left: 20px;">
+                <h4 style="margin-bottom: 15px;">CPU Miner (recommended only for test usage)</h4>
+                <p style="margin: 8px 0 8px 8px;">1. Download the latest miner build from the <a href="https://github.com/aionnetwork/aion_miner/releases" target="_blank">official github repository</a></p>
+                <p style="margin: 8px 0 8px 8px;">3. Run the aionminer executable, specifying the <b>pool's stratum url</b> (using -l), your <b>rewards address</b> (using -u) where you will recieve your payouts and <b>cpu cores to mine with</b> (using -t):</p>
+                <p style="margin: 8px 0 8px 20px;"><span class="code">./aionminer -l pool.aion.network:3333 -u {rewards_address} -t {thread_count}</span></p>
+            </div>
         </div>
     </div>
 </div>

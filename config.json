@@ -55,7 +55,7 @@
         "stats": {
             "updateInterval": 60,
             "historicalRetention": 43200,
-            "hashrateWindow": 300
+            "hashrateWindow": 3600
         },
         "adminCenter": {
             "enabled": false,

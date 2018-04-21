@@ -31,7 +31,6 @@ module.exports = function(logger){
 
     var logSystem = 'Website';
 
-
     var pageFiles = {
         'index.html': 'index',
         'home.html': '',
@@ -61,7 +60,26 @@ module.exports = function(logger){
             pageProcessed[pageName] = pageTemplates[pageName]({
                 poolsConfigs: poolConfigs,
                 stats: portalStats.stats,
-                portalConfig: portalConfig
+                portalConfig: portalConfig,
+                siprefixed: function(number) {
+                    var units = ["", "k", "M", "G", "T", "P", "E"];
+
+                    // what tier? (determines prefix)
+                    var tier = Math.log10(number) / 3 | 0;
+
+                    // if zero, we don't need a prefix
+                    if(tier == 0) return number;
+
+                    // get prefix and determine scale
+                    var prefix = units[tier];
+                    var scale = Math.pow(10, tier * 3);
+
+                    // scale the number
+                    var scaled = number / scale;
+
+                    // format number and add prefix as suffix
+                    return scaled + prefix;
+                }
             });
             indexesProcessed[pageName] = pageTemplates.index({
                 page: pageProcessed[pageName],
@@ -121,9 +139,15 @@ module.exports = function(logger){
 
         });
     };
-
-    setInterval(buildUpdatedWebsite, websiteConfig.stats.updateInterval * 1000);
-
+    // original:
+    //setInterval(buildUpdatedWebsite, websiteConfig.stats.updateInterval * 1000);
+    
+    // change to a setTimeout()-based polling since we introduced a network call in the build 
+    // function, which might** block for an interval longer than updateInterval 
+    (function buildpages() {
+        buildUpdatedWebsite();
+        setTimeout(buildpages, websiteConfig.stats.updateInterval * 1000);
+    }());
 
     var buildKeyScriptPage = function(){
         async.waterfall([
@@ -248,6 +272,9 @@ module.exports = function(logger){
         });
     };
 
+    
+
+    
 
 
     var app = express();

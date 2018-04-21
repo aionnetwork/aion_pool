@@ -52,36 +52,48 @@
 {{ for(var pool in it.stats.pools) { }}
 
         <div class="chartHolder">
-            <div id="inputContainer">
+            <!--div id="inputContainer">
                 <input id="input" type="text" value>
                 <i id="inputIcon" class="fa fa-search"></i>
+            </div-->
+            <div style="text-align: center; font-size: 24px; padding-bottom: 35px; padding-top: 15px;">
+                Share Contributors in Last 1 Hour
             </div>
-            <table class="pure-table">
-                <thead>
-                <tr>
-                    <th>Address</th>
-                    <th>Valid Shares</th>
-                    <th>Invalid shares</th>
-                    <th>Efficiency</th>
-                    
-                </tr>
-                </thead>
-                {{ for(var worker in it.stats.pools[pool].workers) { }}
-                   {{var workerstat = it.stats.pools[pool].workers[worker];}}
-                    <tr class="pure-table-odd">
-                        <td class="worker-link">{{=worker}}</td>
-                        <td>{{=Math.floor(workerstat.shares)}}</td>
-                        <td>{{=Math.floor(workerstat.invalidshares)}}</td>
-                        <td>{{? workerstat.shares > 0}} {{=Math.floor(10000 * workerstat.shares / (workerstat.shares + workerstat.invalidshares)) / 100}}% {{??}} 0% {{?}}</td>
-                        
+
+            {{? Object.keys(it.stats.pools[pool].workers).length}}
+                <table class="pure-table">
+                    <thead>
+                    <tr>
+                        <th>Address</th>
+                        <th>Valid Shares</th>
+                        <th>Invalid shares</th>
+                        <th>Efficiency</th>
                     </tr>
-                {{ } }}
-            </table>
+                    </thead>
+                    {{ for(var worker in it.stats.pools[pool].workers) { }}
+                       {{var workerstat = it.stats.pools[pool].workers[worker];}}
+                        <tr class="pure-table-odd">
+                            <!--td class="worker-link">{{=worker}}</td-->
+                            <td>{{=worker}}</td>
+                            <td>{{=it.siprefixed(Math.floor(workerstat.shares))}}</td>
+                            <td>{{=it.siprefixed(Math.floor(workerstat.invalidshares))}}</td>
+                            <td>{{? workerstat.shares > 0}} {{=Math.floor(10000 * workerstat.shares / (workerstat.shares + workerstat.invalidshares)) / 100}}% {{??}} 0% {{?}}</td>
+                            
+                        </tr>
+                    {{ } }}
+                </table>
+            {{??}}
+                <div style="text-align: center; padding-top: 20px;">No Workers Have Submitted Shares Yet</div>
+            {{?}}
+
+
+            
     </div>
 </div>
 {{ } }}
 <script>
     $(function(){
+        /*
         $('#inputIcon').click(function(event){
             const searchText = $('#input').val();
             console.log(searchText);
@@ -99,6 +111,6 @@
         $('.worker-link').click(function(event) {
             const workerHash = event.target.innerHTML;
             window.location.href = '/workers/' + workerHash;
-        })
+        })*/
     });
 </script>

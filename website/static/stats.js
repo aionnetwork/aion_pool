@@ -5,9 +5,12 @@ var poolBlockData;
 var poolWorkerChart;
 var poolHashrateChart;
 var poolBlockChart;
+var poolPercentChart;
 
 var statData;
 var poolKeys;
+
+var units = [ ' Sol/s', ' KSol/s', ' MSol/s', ' GSol/s', ' TSol/s', ' PSol/s' ];
 
 function buildChartData(){
 
@@ -30,27 +33,32 @@ function buildChartData(){
             var pName = poolKeys[f];
             var a = pools[pName] = (pools[pName] || {
                 hashrate: [],
+                percent: [],
                 workers: [],
                 blocks: []
             });
             if (pName in statData[i].pools){
                 a.hashrate.push([time, statData[i].pools[pName].hashrate]);
+                a.percent.push([time, statData[i].pools[pName].percent]);
                 a.workers.push([time, statData[i].pools[pName].workerCount]);
                 a.blocks.push([time, statData[i].pools[pName].blocks.pending])
             }
             else{
                 a.hashrate.push([time, 0]);
+                a.percent.push([time, 0]);
                 a.workers.push([time, 0]);
                 a.blocks.push([time, 0])
             }
 
         }
-
     }
 
     poolWorkerData = [];
     poolHashrateData = [];
+    poolPercentData = [];
     poolBlockData = [];
+
+    console.log(statData);
 
     for (var pool in pools){
         poolWorkerData.push({
@@ -61,6 +69,10 @@ function buildChartData(){
             key: pool,
             values: pools[pool].hashrate
         });
+        poolPercentData.push({
+            key: pool,
+            values: pools[pool].percent
+        });
         poolBlockData.push({
             key: pool,
             values: pools[pool].blocks
@@ -68,6 +80,21 @@ function buildChartData(){
     }
 }
 
+function getReadableHashRateString(number) {
+        // what tier? (determines prefix)
+        var tier = Math.log10(number) / 3 | 0;
+
+        // get prefix and determine scale
+        var prefix = units[tier];
+        var scale = Math.pow(10, tier * 3);
+
+        // scale the number
+        var scaled = number / scale;
+
+        // format number and add prefix as suffix
+        return scaled.toFixed(2) + prefix;
+    }
+/*
 function getReadableHashRateString(hashrate){
     hashrate = (hashrate * 2);
     if (hashrate < 1000000) {
@@ -77,7 +104,7 @@ function getReadableHashRateString(hashrate){
     var i = Math.floor((Math.log(hashrate/100000) / Math.log(1000)) - 1) || 0;
     hashrate = (hashrate/100000) / Math.pow(1000, i + 1);
     return hashrate.toFixed(2) + byteUnits[i];
-}
+}*/
 
 function timeOfDayFormat(timestamp){
     var dStr = d3.time.format('%I:%M %p')(new Date(timestamp));
@@ -121,6 +148,24 @@ function displayCharts(){
         d3.select('#poolHashrate').datum(poolHashrateData).call(poolHashrateChart);
 
         return poolHashrateChart;
+    });
+
+    console.log(poolPercentData)
+
+    nv.addGraph(function() {
+        poolPercentChart = nv.models.lineChart()
+            .margin({left: 100, right: 40})
+            .x(function(d){ return d[0] })
+            .y(function(d){ return d[1] })
+            .useInteractiveGuideline(true);
+
+        poolPercentChart.xAxis.tickFormat(timeOfDayFormat);
+
+        poolPercentChart.yAxis.tickFormat(d3.format(".0%"));
+
+        d3.select('#poolPercent').datum(poolPercentData).call(poolPercentChart);
+
+        return poolPercentChart;
     });
 
 

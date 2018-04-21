@@ -29,19 +29,27 @@
 </style>
 
 <div id="topCharts">
+    <div style="text-align: center; font-size: 24px; padding-bottom: 35px; padding-top: 15px;">
+        Recent Statistics
+    </div>
 
     <div class="chartWrapper">
-        <div class="chartLabel">Workers Per Pool</div>
+        <div class="chartLabel">Active Miners (shares submitted within last hour)</div>
         <div class="chartHolder"><svg id="poolWorkers"/></div>
     </div>
 
     <div class="chartWrapper">
-        <div class="chartLabel">Hashrate Per Pool</div>
+        <div class="chartLabel">Pool Hashrate (1 min snapshots)</div>
         <div class="chartHolder"><svg id="poolHashrate"/></div>
     </div>
 
     <div class="chartWrapper">
-        <div class="chartLabel">Blocks Pending Per Pool</div>
+        <div class="chartLabel">Hashrate Pecentage of Total Network (1 min snapshots)</div>
+        <div class="chartHolder"><svg id="poolPercent"/></div>
+    </div>
+
+    <div class="chartWrapper">
+        <div class="chartLabel">Blocks Proposed</div>
         <div class="chartHolder"><svg id="poolBlocks"/></div>
     </div>
 
