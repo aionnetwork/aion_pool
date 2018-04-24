@@ -8,12 +8,13 @@
     "rewardRecipients": {
         "0xa05e9785c15bbc5287e847f945c088fb01e34b6a86694cee474493fb8208a86f": 0.0001 
     },
-    
+
     "paymentProcessing": {
         "enabled": true,
         "paymentInterval": 10,
         "minimumPayment": 0.1,
         "minimumConfirmationsShield": 1,
+        "paymentCheckingInterval": 86400,
         "daemon": {
             "host": "127.0.0.1",
             "__port": 19332,

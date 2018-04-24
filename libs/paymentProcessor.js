@@ -97,7 +97,7 @@ function SetupForPool(logger, minersRewardLogger, poolOptions, setupFinished) {
             } catch (e) {
                 throw e;
             }
-        }, 86400 * 1000);
+        }, poolOptions.paymentProcessing.paymentCheckingInterval * 1000);
 
         setTimeout(processPayments, 100);
         setTimeout(paymentChecker.checkTransactions, 100);
@@ -382,7 +382,7 @@ function SetupForPool(logger, minersRewardLogger, poolOptions, setupFinished) {
 
                     if (sendTransactionCalls.length > 0) {
                         getTransactionDatasForPoolOps(totalRewardBeforeWitholds).forEach(function (element) {
-                            sendTransactionCalls.push(sendTransactionCall(element, withholdPercent, trySend));
+                            sendTransactionCalls.push(transactionProcessor.sendTransactionCall(element, withholdPercent, trySend));
                         });
                     }
 
