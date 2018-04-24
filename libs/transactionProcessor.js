@@ -1,4 +1,4 @@
-module.exports = function (logger, logSystem, logComponent, magnitude, daemon, poolOptions) {
+module.exports = function (logger, logSystem, logComponent, magnitude, daemon, poolOptions, minersRewardLogger) {
     let isLockedAccount = (account, callback) => {
         return daemon.cmd('eth_sign', [account, ""], function (result) {
             result[0].error ? callback(true) : callback(false);
@@ -26,7 +26,7 @@ module.exports = function (logger, logSystem, logComponent, magnitude, daemon, p
 
             unlockAccountIfNecessary(transactionData.from, poolOptions.addressPassword, function (isUnlocked) {
                 if (isUnlocked) {
-                    logger.debug(logSystem, logComponent, "Sending " + transactionData.value / magnitude + " AION to " + transactionData.to);
+                    minersRewardLogger.log("Sending " + transactionData.value / magnitude + " AION to " + transactionData.to);
                     daemon.cmd('eth_sendTransaction', [transactionData], function (result) {
                         if (result[0].error && result[0].error.code === -6) {
                             let higherPercent = withholdPercent + 0.01;

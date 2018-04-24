@@ -6,10 +6,10 @@ const util = require('stratum-pool/lib/util.js');
 const RewardLogger = require('./logging/rewardLogger');
 const TransactionProcessor = require('./transactionProcessor');
 const PaymentChecker = require('./paymentChecker');
+const minersRewardLogger = new RewardLogger('logs/miners_rewards.log');
 
 module.exports = function (logger) {
 
-    const minersRewardLogger = new RewardLogger('logs/miners_rewards.log');
     const poolConfigs = JSON.parse(process.env.pools);
     let enabledPools = [];
     Object.keys(poolConfigs).forEach((coin) => {
@@ -58,7 +58,7 @@ function SetupForPool(logger, minersRewardLogger, poolOptions, setupFinished) {
     const coinPrecision = magnitude.toString().length - 1;
 
     let paymentInterval;
-    let transactionProcessor = new TransactionProcessor(logger, logSystem, logComponent, magnitude, daemon, poolOptions);
+    let transactionProcessor = new TransactionProcessor(logger, logSystem, logComponent, magnitude, daemon, poolOptions, minersRewardLogger);
     let paymentChecker = new PaymentChecker(logger);
 
     async.parallel([
