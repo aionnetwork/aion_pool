@@ -63,7 +63,7 @@ module.exports = function (logger, minersRewardLogger) {
                         }
 
                         transactions.forEach(transaction => {
-                            if (transaction.txHash === -1) {
+                            if (transaction.txHash === "-1") {
                                 failedTransactions.push(transaction);
                             }
                         });
@@ -90,7 +90,7 @@ module.exports = function (logger, minersRewardLogger) {
 
     let checkIfTransactionWasSuccessful = function (transactionDetails) {
         return function (callback) {
-            if (transactionDetails.txHash !== -1) {
+            if (transactionDetails.txHash !== "-1") {
                 daemon.cmd('eth_getTransactionByHash', [transactionDetails.txHash], function (result) {
                     transactionDetails.processed = !result[0].error;
                     callback(null, transactionDetails);
