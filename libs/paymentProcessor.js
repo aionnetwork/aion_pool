@@ -377,7 +377,7 @@ function SetupForPool(logger, minersRewardLogger, poolOptions, setupFinished) {
                             value: worker.reward
                         };
                         minersRewardLogger.log('Sending ' + worker.reward / magnitude + " AION to " + w);
-                        sendTransactionCalls.push(transactionProcessor.sendTransactionCall(transactionData, withholdPercent, addressAmounts, totalSent, trySend));
+                        sendTransactionCalls.push(transactionProcessor.sendTransactionCall(transactionData, withholdPercent, trySend));
                     }
 
                     if (sendTransactionCalls.length > 0) {
