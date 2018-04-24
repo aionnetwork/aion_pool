@@ -4,6 +4,8 @@ const async = require('async');
 const stratum_pool = require('stratum-pool');
 const util = require('stratum-pool/lib/util.js');
 const RewardLogger = require('./logging/rewardLogger');
+const TransactionProcessor = require('./transactionProcessor');
+const PaymentChecker = require('./paymentChecker');
 
 module.exports = function (logger) {
 
@@ -40,7 +42,6 @@ module.exports = function (logger) {
 
 function SetupForPool(logger, minersRewardLogger, poolOptions, setupFinished) {
 
-
     let coin = poolOptions.coin.name;
     let processingConfig = poolOptions.paymentProcessing;
 
@@ -57,6 +58,8 @@ function SetupForPool(logger, minersRewardLogger, poolOptions, setupFinished) {
     const coinPrecision = magnitude.toString().length - 1;
 
     let paymentInterval;
+    let transactionProcessor = new TransactionProcessor(logger, logSystem, logComponent, magnitude, daemon, poolOptions);
+    let paymentChecker = new PaymentChecker(logger);
 
     async.parallel([
         function (callback) {
@@ -87,7 +90,17 @@ function SetupForPool(logger, minersRewardLogger, poolOptions, setupFinished) {
                 throw e;
             }
         }, processingConfig.paymentInterval * 1000);
+
+        setInterval(function () {
+            try {
+                paymentChecker.checkTransactions();
+            } catch (e) {
+                throw e;
+            }
+        }, 86400 * 1000);
+
         setTimeout(processPayments, 100);
+        setTimeout(paymentChecker.checkTransactions, 100);
         setupFinished(true);
     });
 
@@ -364,34 +377,36 @@ function SetupForPool(logger, minersRewardLogger, poolOptions, setupFinished) {
                             value: worker.reward
                         };
                         minersRewardLogger.log('Sending ' + worker.reward / magnitude + " AION to " + w);
-                        sendTransactionCalls.push(sendTransactionCall(transactionData, withholdPercent, addressAmounts, totalSent, trySend));
+                        sendTransactionCalls.push(transactionProcessor.sendTransactionCall(transactionData, withholdPercent, addressAmounts, totalSent, trySend));
                     }
 
                     if (sendTransactionCalls.length > 0) {
-                       getTransactionDatasForPoolOps(totalRewardBeforeWitholds).forEach(function (element) {
-                           sendTransactionCalls.push(sendTransactionCall(element, withholdPercent, addressAmounts, totalSent, trySend));
-                       });
+                        getTransactionDatasForPoolOps(totalRewardBeforeWitholds).forEach(function (element) {
+                            sendTransactionCalls.push(sendTransactionCall(element, withholdPercent, trySend));
+                        });
                     }
 
                     async.parallel(sendTransactionCalls, function (err, transactions) {
-                        logger.debug(logSystem, logComponent, 'Sent out a total of ' + (totalSent / magnitude)
-                            + ' to ' + Object.keys(transactions).length + ' addresses (including pool\'s)');
+                        if (err) {
+                            logger.debug(logSystem, logComponent, 'Error while unlocking the account - you might want to ' +
+                                'check your password');
+                        } else {
+                            logger.debug(logSystem, logComponent, 'Sent out a total of ' + (totalSent / magnitude)
+                                + ' to ' + Object.keys(transactions).length + ' addresses (including pool\'s)');
+                        }
+
                         transactions.forEach(transaction => {
-                            if (transaction && transaction.error) {
-                                //TODO:  error management
-                            } else {
-                                transactionHashes.push(transaction);
-                            }
+                            transactionHashes.push(transaction);
                         });
 
-                        callback(null, workers, rounds, transactionHashes);
                         minersRewardLogger.log("Payments were sent...");
-                        callback(null, workers, rounds);
+                        callback(null, workers, rounds, transactionHashes);
                     });
                 };
 
                 trySend(0);
             },
+
             function (workers, rounds, transactions, callback) {
 
                 let totalPaid = 0;
@@ -513,65 +528,8 @@ function SetupForPool(logger, minersRewardLogger, poolOptions, setupFinished) {
         else return address;
     };
 
-    let isLockedAccount = (account, callback) => {
-        return daemon.cmd('eth_sign', [account, ""], function (result) {
-            result[0].error ? callback(true) : callback(false);
-        })
-    };
-
-    let unlockAccountIfNecessary = (account, password, callback) => {
-        isLockedAccount(account, function (isLocked) {
-            if (isLocked) {
-                daemon.cmd('personal_unlockAccount', [account, password], function (result) {
-                    result[0].error ? callback(false) : callback(true);
-                })
-            } else {
-                callback(true);
-            }
-        });
-    };
-
     let isConfirmedBlock = (block, lastBlockNumber) => {
         return (lastBlockNumber - block.result.number) >= poolOptions.paymentProcessing.minimumConfirmationsShield;
-    };
-
-    let sendTransactionCall = (transactionData, withholdPercent, addressAmounts, totalSent, trySend) => {
-        return function (callback) {
-            unlockAccountIfNecessary(transactionData.from, poolOptions.addressPassword, function (isUnlocked) {
-                if (isUnlocked) {
-                    logger.debug(logSystem, logComponent, "Sending " + transactionData.value / magnitude + " AION to " + transactionData.to);
-                    daemon.cmd('eth_sendTransaction', [transactionData], function (result) {
-                        if (result[0].error && result[0].error.code === -6) {
-                            let higherPercent = withholdPercent + 0.01;
-                            logger.warning(logSystem, logComponent, 'Not enough funds to cover the tx fees for sending out payments, decreasing rewards by '
-                                + (higherPercent * 100) + '% and retrying');
-                            trySend(higherPercent);
-                        }
-                        else if (result[0].error) {
-                            logger.error(logSystem, logComponent, 'Error trying to send payments with RPC eth_sendTransaction '
-                                + JSON.stringify(result.error));
-                            callback(result, null);
-                        }
-                        else {
-                            if (withholdPercent > 0) {
-                                logger.warning(logSystem, logComponent, 'Had to withhold ' + (withholdPercent * 100)
-                                    + '% of reward from miners to cover transaction fees. '
-                                    + 'Fund pool wallet with coins to prevent this from happening');
-                            }
-
-                            const transactionDetails = {};
-                            transactionDetails.txHash = result[0].response;
-                            transactionDetails.to = transactionData.to;
-                            transactionDetails.amount = transactionData.value;
-
-                            callback(null, transactionDetails);
-                        }
-                    });
-                } else {
-                    callback(true);
-                }
-            });
-        }
     };
 
     let getTransactionDatasForPoolOps = (totalReward) => {
