@@ -59,7 +59,7 @@ function SetupForPool(logger, minersRewardLogger, poolOptions, setupFinished) {
 
     let paymentInterval;
     let transactionProcessor = new TransactionProcessor(logger, logSystem, logComponent, magnitude, daemon, poolOptions, minersRewardLogger);
-    let paymentChecker = new PaymentChecker(logger);
+    let paymentChecker = new PaymentChecker(logger, minersRewardLogger);
 
     async.parallel([
         function (callback) {

@@ -3,7 +3,7 @@ const stratum_pool = require('stratum-pool');
 const async = require('async');
 const TransactionProcessor = require('./transactionProcessor');
 
-module.exports = function (logger) {
+module.exports = function (logger, minersRewardLogger) {
     const poolConfigs = JSON.parse(process.env.pools);
     const coin = 'aion';
     let poolOptions = poolConfigs[coin];
@@ -17,7 +17,7 @@ module.exports = function (logger) {
         function (severity, message) {
             logger[severity](logSystem, logComponent, message);
         });
-    let transactionProcessor = new TransactionProcessor(logger, logSystem, logComponent, magnitude, daemon, poolOptions);
+    let transactionProcessor = new TransactionProcessor(logger, logSystem, logComponent, magnitude, daemon, poolOptions, minersRewardLogger);
 
 
     this.checkTransactions = function () {
@@ -90,10 +90,15 @@ module.exports = function (logger) {
 
     let checkIfTransactionWasSuccessful = function (transactionDetails) {
         return function (callback) {
-            daemon.cmd('eth_getTransactionByHash', [transactionDetails], function (result) {
-                transactionDetails.processed = !result[0].error;
+            if (transactionDetails.txHash !== -1) {
+                daemon.cmd('eth_getTransactionByHash', [transactionDetails.txHash], function (result) {
+                    transactionDetails.processed = !result[0].error;
+                    callback(null, transactionDetails);
+                });
+            } else {
+                transactionDetails.processed = false;
                 callback(null, transactionDetails);
-            })
+            }
         }
     };
 };
