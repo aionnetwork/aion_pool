@@ -1,67 +1,65 @@
 {
+  "enabled": true,
+  "testnet": true,
+  "coin": "aion.json",
+  "address": "0xa0a0953954f2b4c7c4e7a6d6c8b2039dbe8b8125babca9fbc2336131dc4d2a46",
+  "addressPassword": "asd",
+  "__rewardRecipients": "Aion: 0.0001 * 100 = 0.01% fee; total in percentage (0.1 = 10% fee, 0.01 = 1% fee, etc) is the pool fee charged, (rewardRecipients[0] + rewardRecipients[1] + ...)%",
+  "rewardRecipients": {
+    "0xa0875232a15313aaf343c23be7c962f85407b0f9c639fac3c7c4782657d9a3de": 0.015
+  },
+  "paymentProcessing": {
     "enabled": true,
-    "testnet": true,
-    "coin": "aion.json",
-    "address": "0xa0aef3696d14a5e1f5e2d33b65508bffe69f4cd770a8e3d85f5205cc16fb2516",
-    "addressPassword": "asd",
-    "__rewardRecipients": "Aion: 0.0001 * 100 = 0.01% fee; total in percentage (0.1 = 10% fee, 0.01 = 1% fee, etc) is the pool fee charged, (rewardRecipients[0] + rewardRecipients[1] + ...)%",
-    "rewardRecipients": {
-        "0xa05e9785c15bbc5287e847f945c088fb01e34b6a86694cee474493fb8208a86f": 0.0001 
-    },
-
-    "paymentProcessing": {
-        "enabled": true,
-        "paymentInterval": 10,
-        "minimumPayment": 0.1,
-        "minimumConfirmationsShield": 1,
-        "paymentCheckingInterval": 86400,
-        "daemon": {
-            "host": "127.0.0.1",
-            "__port": 19332,
-            "port": 8545,
-            "user": "",
-            "password": ""
-        }
-    },
-
-    "__ports": "Each pool can have as many ports for your miners to connect to as you wish. Each port can be configured to use its own pool difficulty and variable difficulty settings. varDiff is optional and will only be used for the ports you configure it for.",
-    "ports": {
-        "3008": {
-            "diff": 1
-        }
-    },
-
-    "daemons": [
-        {
-            "host": "127.0.0.1",
-            "port": 8545,
-            "user": "",
-            "password": ""
-        }
-    ],
-
-    "p2p__":
-        "options to enable pool connects as peer to receive new block notification broadcasted",
-    "p2p": {
-        "enabled": false,
-        "host": "127.0.0.1",
-        "port__":
-            "configured for daemon (this is the actual peer port not RPC port)",
-        "port": 19333,
-        "disableTransactions__":
-            "If your coin daemon is new enough (i.e. not a shitcoin) then it will support a p2p feature that prevents the daemon from spamming our peer node with unnecessary transaction data. Assume its supported but if you have problems try disabling it.",
-        "disableTransactions": true
-    },
-
-    "mposMode": {
-        "enabled": false,
-        "host": "127.0.0.1",
-        "port": 3306,
-        "user": "me",
-        "password": "mypass",
-        "database": "ltc",
-        "checkPassword": true,
-        "autoCreateWorker": false
+    "paymentInterval": 60,
+    "minimumPayment": 0.1,
+    "minimumConfirmationsShield": 5,
+    "paymentCheckingInterval": 7200,
+    "daemon": {
+      "host": "127.0.0.1",
+      "__port": 19332,
+      "port": 8545,
+      "user": "",
+      "password": ""
     }
-
+  },
+  "__ports": "Each pool can have as many ports for your miners to connect to as you wish. Each port can be configured to use its own pool difficulty and variable difficulty settings. varDiff is optional and will only be used for the ports you configure it for.",
+  "ports": {
+    "3008": {
+      "diff": 0.5,
+      "varDiff": {
+        "minDiff": 0.005,
+        "maxDiff": 100000000000000,
+        "targetTime": 5,
+        "retargetTime": 20,
+        "variancePercent": 30
+      }
+    }
+  },
+  "daemons": [
+    {
+      "host": "127.0.0.1",
+      "port": 8545,
+      "user": "",
+      "password": ""
+    }
+  ],
+  "p2p__": "options to enable pool connects as peer to receive new block notification broadcasted",
+  "p2p": {
+    "enabled": false,
+    "host": "127.0.0.1",
+    "port__": "configured for daemon (this is the actual peer port not RPC port)",
+    "port": 19333,
+    "disableTransactions__": "If your coin daemon is new enough (i.e. not a shitcoin) then it will support a p2p feature that prevents the daemon from spamming our peer node with unnecessary transaction data. Assume its supported but if you have problems try disabling it.",
+    "disableTransactions": true
+  },
+  "mposMode": {
+    "enabled": false,
+    "host": "127.0.0.1",
+    "port": 3306,
+    "user": "me",
+    "password": "mypass",
+    "database": "ltc",
+    "checkPassword": true,
+    "autoCreateWorker": false
+  }
 }

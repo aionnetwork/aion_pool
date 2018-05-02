@@ -38,11 +38,9 @@ module.exports = function (configuration) {
 
     const transport = new (transports.DailyRotateFile)({
         dirname: 'logs',
-        filename: 'aion-pool-%DATE%.log',
-        datePattern: 'YYYY-MM-DD-HH',
-        zippedArchive: true,
+        filename: 'aion-pool.%DATE%.log',
+        datePattern: 'YYYY-MM-DD',
         maxSize: '20m',
-        maxFiles: '14d'
     });
 
     const logger = createLogger({

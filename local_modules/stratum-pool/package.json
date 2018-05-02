@@ -6,7 +6,7 @@
     "bundleDependencies": true,
     "dependencies": {
         "async": "*",
-        "base58-native": "*",
-        "bignum": "*"
+        "base58": "^1.0.1",
+        "bignumber.js": "^7.0.1"
     }
 }

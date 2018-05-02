@@ -1,8 +1,6 @@
 var crypto = require('crypto');
 
-var base58 = require('base58-native');
-var bignum = require('bignum');
-var ev = require('equihashverify');
+var base58 = require('base58');
 var blake2 = require('blake2');
 
 exports.blake2 = function(len, input){
@@ -335,50 +333,6 @@ exports.shiftMax256Right = function(shiftRight){
     }
 
     return new Buffer(octets);
-};
-
-
-exports.bufferToCompactBits = function(startingBuff){
-    var bigNum = bignum.fromBuffer(startingBuff);
-    var buff = bigNum.toBuffer();
-
-    buff = buff.readUInt8(0) > 0x7f ? Buffer.concat([new Buffer([0x00]), buff]) : buff;
-
-    buff = Buffer.concat([new Buffer([buff.length]), buff]);
-    var compact = buff.slice(0, 4);
-    return compact;
-};
-
-/*
- Used to convert getblocktemplate bits field into target if target is not included.
- More info: https://en.bitcoin.it/wiki/Target
- */
-
-exports.bignumFromBitsBuffer = function(bitsBuff){
-    var numBytes = bitsBuff.readUInt8(0);
-    var bigBits = bignum.fromBuffer(bitsBuff.slice(1));
-    var target = bigBits.mul(
-        bignum(2).pow(
-            bignum(8).mul(
-                    numBytes - 3
-            )
-        )
-    );
-    return target;
-};
-
-exports.bignumFromBitsHex = function(bitsString){
-    var bitsBuff = new Buffer(bitsString, 'hex');
-    return exports.bignumFromBitsBuffer(bitsBuff);
-};
-
-exports.convertBitsToBuff = function(bitsBuff){
-    var target = exports.bignumFromBitsBuffer(bitsBuff);
-    var resultBuff = target.toBuffer();
-    var buff256 = new Buffer(32);
-    buff256.fill(0);
-    resultBuff.copy(buff256, buff256.length - resultBuff.length);
-    return buff256;
 };
 
 exports.getTruncatedDiff = function(shift){

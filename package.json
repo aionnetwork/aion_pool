@@ -19,7 +19,7 @@
   "dependencies": {
     "aion-web3": "0.0.3",
     "async": "*",
-    "bignum": "*",
+    "bignumber.js": "^7.0.1",
     "bindings": "*",
     "blake2": "file:local_modules/node-blake2",
     "body-parser": "*",
@@ -32,13 +32,14 @@
     "extend": "*",
     "moment": "^2.20.1",
     "mysql": "*",
+    "node-fetch": "^2.1.2",
     "node-watch": "*",
     "nonce": "*",
     "redis": "*",
-    "request": "*",
+    "request": "^2.85.0",
     "stratum-pool": "file:local_modules/stratum-pool",
-    "winston": "3.0.0-rc4",
-    "winston-daily-rotate-file": "3.0.1"
+    "winston": "3.0.0-rc5",
+    "winston-daily-rotate-file": "3.1.3"
   },
   "devDependencies": {
     "gulp": "^3.9.1",

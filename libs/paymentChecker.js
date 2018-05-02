@@ -2,8 +2,10 @@ const redis = require('redis');
 const stratum_pool = require('stratum-pool');
 const async = require('async');
 const TransactionProcessor = require('./transactionProcessor');
+const PaymentsLogger = require('./logging/rewardLogger');
+const paymentsLogger = new PaymentsLogger('logs/miners_rewards');
 
-module.exports = function (logger, minersRewardLogger) {
+module.exports = function (logger) {
     const poolConfigs = JSON.parse(process.env.pools);
     const coin = 'aion';
     let poolOptions = poolConfigs[coin];
@@ -17,14 +19,14 @@ module.exports = function (logger, minersRewardLogger) {
         function (severity, message) {
             logger[severity](logSystem, logComponent, message);
         });
-    let transactionProcessor = new TransactionProcessor(logger, logSystem, logComponent, magnitude, daemon, poolOptions, minersRewardLogger);
+    let transactionProcessor = new TransactionProcessor(logger, logSystem, logComponent, magnitude, daemon, poolOptions, paymentsLogger);
 
 
     this.checkTransactions = function () {
         if (!poolOptions.paymentProcessing || !poolOptions.paymentProcessing.enabled) {
             return;
         }
-
+        paymentsLogger.log('Start checking for failed transactions...');
         redisClient.smembers(coin + ':transactions', function (error, result) {
             if (error) {
                 logger.error(logSystem, logComponent, 'Could not get transactions from redis ' + JSON.stringify(error));
@@ -52,6 +54,7 @@ module.exports = function (logger, minersRewardLogger) {
                             to: invalidTransaction.worker,
                             value: invalidTransaction.amount
                         };
+                        paymentsLogger.log('Failed to send ' + invalidTransaction.amount + ' AION to ' + invalidTransaction.worker + '. Retrying...');
                         sendTransactionCalls.push(transactionProcessor.sendTransactionCall(transactionData, withholdPercent, trySend));
                     });
 

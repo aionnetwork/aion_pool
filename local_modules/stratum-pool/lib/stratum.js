@@ -1,4 +1,3 @@
-const BigNum = require('bignum');
 const net = require('net');
 const events = require('events');
 const tls = require('tls');
@@ -289,15 +288,15 @@ const StratumClient = function (options) {
         }
         else {
             var zeroPad = '0';
-            zeroPad = zeroPad.repeat((64 - (adjPow.toString(16).length)));
+            // zeroPad = zeroPad.repeat((64 - (adjPow.toString(16).length)));
         }
-        const target = (zeroPad + adjPow.toString(16)).substr(0, 64);
+        // const target = (zeroPad + adjPow.toString(16)).substr(0, 64);
 
 
         sendJson({
             id: null,
             method: "mining.set_difficulty",
-            params: [target]//[512],
+            params: [difficulty]//[512],
         });
         return true;
     };

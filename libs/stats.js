@@ -1,23 +1,20 @@
-var zlib = require('zlib');
+const zlib = require('zlib');
 
-var redis = require('redis');
-var async = require('async');
+const redis = require('redis');
+const async = require('async');
 const stratum_pool = require('stratum-pool');
-
-var os = require('os');
-
-var algos = require('stratum-pool/lib/algos.js');
-
+const os = require('os');
+const algos = require('stratum-pool/lib/algos.js');
 
 module.exports = function(logger, portalConfig, poolConfigs){
 
-    var _this = this;
+    const _this = this;
 
-    var logSystem = 'Stats';
+    const logSystem = 'Stats';
 
-    var redisClients = [];
-    var redisStats;
-    var rpcDaemons = {};
+    const redisClients = [];
+    let redisStats;
+    const rpcDaemons = {};
 
     this.statHistory = [];
     this.statPoolHistory = [];
@@ -28,18 +25,18 @@ module.exports = function(logger, portalConfig, poolConfigs){
     setupStatsRedis();
     gatherStatHistory();
 
-    var canDoStats = true;
+    let canDoStats = true;
 
     Object.keys(poolConfigs).forEach(function(coin){
 
         if (!canDoStats) return;
 
-        var poolConfig = poolConfigs[coin];
+        const poolConfig = poolConfigs[coin];
 
-        var redisConfig = poolConfig.redis;
+        const redisConfig = poolConfig.redis;
 
-        for (var i = 0; i < redisClients.length; i++){
-            var client = redisClients[i];
+        for (let i = 0; i < redisClients.length; i++){
+            const client = redisClients[i];
             if (client.client.port === redisConfig.port && client.client.host === redisConfig.host){
                 client.coins.push(coin);
                 return;
@@ -65,14 +62,14 @@ module.exports = function(logger, portalConfig, poolConfigs){
 
     function gatherStatHistory(){
 
-        var retentionTime = (((Date.now() / 1000) - portalConfig.website.stats.historicalRetention) | 0).toString();
+        const retentionTime = (((Date.now() / 1000) - portalConfig.website.stats.historicalRetention) | 0).toString();
 
         redisStats.zrangebyscore(['statHistory', retentionTime, '+inf'], function(err, replies){
             if (err) {
                 logger.error(logSystem, 'Historics', 'Error when trying to grab historical stats ' + JSON.stringify(err));
                 return;
             }
-            for (var i = 0; i < replies.length; i++){
+            for (let i = 0; i < replies.length; i++){
                 _this.statHistory.push(JSON.parse(replies[i]));
             }
             _this.statHistory = _this.statHistory.sort(function(a, b){
@@ -85,11 +82,11 @@ module.exports = function(logger, portalConfig, poolConfigs){
     }
 
     function addStatPoolHistory(stats){
-        var data = {
+        const data = {
             time: stats.time,
             pools: {}
         };
-        for (var pool in stats.pools){
+        for (let pool in stats.pools){
             data.pools[pool] = {
                 hashrate: stats.pools[pool].hashrate,
                 percent: stats.pools[pool].percent,
@@ -102,11 +99,11 @@ module.exports = function(logger, portalConfig, poolConfigs){
 
     this.getGlobalStats = function(callback){
 
-        var statGatherTime = Date.now() / 1000 | 0;
+        const statGatherTime = Date.now() / 1000 | 0;
 
-        var allCoinStats = {};
+        const allCoinStats = {};
 
-        var allCoinHashrates = {};
+        const allCoinHashrates = {};
 
         rpcDaemons["aion"].cmd('getMinerStats', [poolConfigs["aion"].address], function (result) {
             //console.log(result[0].response.minerHashrate);
@@ -115,32 +112,33 @@ module.exports = function(logger, portalConfig, poolConfigs){
                 percent: 0
             };
 
-            if (result[0] && result[0].response) {                
+            if (result[0] && result[0].response) {
                 if (result[0].response.minerHashrate)
                     allCoinHashrates["aion"].hashrate = parseFloat(result[0].response.minerHashrate);
-                
+
                 if (result[0].response.minerHashrateShare)
                     allCoinHashrates["aion"].percent = parseFloat(result[0].response.minerHashrateShare);
-            } 
+            }
 
             async.each(redisClients, function(client, callback){
-                var windowTime = (((Date.now() / 1000) - portalConfig.website.stats.hashrateWindow) | 0).toString();
-                var redisCommands = [];
+                const windowTime = (((Date.now() / 1000) - portalConfig.website.stats.hashrateWindow) | 0).toString();
+                const redisCommands = [];
 
-                var redisCommandTemplates = [
+                const redisCommandTemplates = [
                     ['zremrangebyscore', ':hashrate', '-inf', '(' + windowTime],
                     ['zrangebyscore', ':hashrate', windowTime, '+inf'],
                     ['hgetall', ':stats'],
                     ['scard', ':blocksPending'],
                     ['scard', ':blocksConfirmed'],
-                    ['scard', ':blocksOrphaned']
+                    ['scard', ':blocksOrphaned'],
+                    ['smembers', ':blocksConfirmed']
                 ];
 
-                var commandsPerCoin = redisCommandTemplates.length;
+                const commandsPerCoin = redisCommandTemplates.length;
 
                 client.coins.map(function(coin){
                     redisCommandTemplates.map(function(t){
-                        var clonedTemplates = t.slice(0);
+                        const clonedTemplates = t.slice(0);
                         clonedTemplates[1] = coin + clonedTemplates[1];
                         redisCommands.push(clonedTemplates);
                     });
@@ -153,9 +151,10 @@ module.exports = function(logger, portalConfig, poolConfigs){
                         callback(err);
                     }
                     else{
-                        for(var i = 0; i < replies.length; i += commandsPerCoin){
-                            var coinName = client.coins[i / commandsPerCoin | 0];
-                            var coinStats = {
+                        for(let i = 0; i < replies.length; i += commandsPerCoin){
+                            const coinName = client.coins[i / commandsPerCoin | 0];
+                            const recentBlocks = _this.getLastMinedBlocks(replies[i + 6], poolConfigs[coinName].explorerUrl);
+                            const coinStats = {
                                 name: coinName,
                                 symbol: poolConfigs[coinName].coin.symbol.toUpperCase(),
                                 algorithm: poolConfigs[coinName].coin.algorithm,
@@ -169,7 +168,9 @@ module.exports = function(logger, portalConfig, poolConfigs){
                                 blocks: {
                                     pending: replies[i + 3],
                                     confirmed: replies[i + 4],
-                                    orphaned: replies[i + 5]
+                                    orphaned: replies[i + 5],
+                                    recentBlocks: recentBlocks,
+                                    mostRecentBlockNumber: recentBlocks.length > 0 ? recentBlocks[recentBlocks.length - 1].height : '-'
                                 }
                             };
                             allCoinStats[coinStats.name] = (coinStats);
@@ -184,9 +185,9 @@ module.exports = function(logger, portalConfig, poolConfigs){
                     return;
                 }
 
-                var portalStats = {
+                const portalStats = {
                     time: statGatherTime,
-                    global:{
+                    global: {
                         workers: 0,
                         hashrate: 0
                     },
@@ -195,13 +196,13 @@ module.exports = function(logger, portalConfig, poolConfigs){
                 };
 
                 Object.keys(allCoinStats).forEach(function(coin){
-                    var coinStats = allCoinStats[coin];
+                    const coinStats = allCoinStats[coin];
                     coinStats.workers = {};
                     coinStats.shares = 0;
                     coinStats.hashrates.forEach(function(ins){
-                        var parts = ins.split(':');
-                        var workerShares = parseFloat(parts[0]);
-                        var worker = parts[1];
+                        const parts = ins.split(':');
+                        let workerShares = parseFloat(parts[0]);
+                        const worker = parts[1];
                         if (workerShares > 0) {
                             coinStats.shares += workerShares;
                             if (worker in coinStats.workers)
@@ -245,7 +246,7 @@ module.exports = function(logger, portalConfig, poolConfigs){
                     }
                     portalStats.algos[algo].hashrate += coinStats.hashrate;
                     portalStats.algos[algo].workers += Object.keys(coinStats.workers).length;
-                    
+
                     for (var worker in coinStats.workers) {
                         coinStats.workers[worker].hashrateString = _this.getReadableHashRateString(shareMultiplier * coinStats.workers[worker].shares / portalConfig.website.stats.hashrateWindow);
                     }*/
@@ -268,9 +269,9 @@ module.exports = function(logger, portalConfig, poolConfigs){
                 _this.statHistory.push(portalStats);
                 addStatPoolHistory(portalStats);
 
-                var retentionTime = (((Date.now() / 1000) - portalConfig.website.stats.historicalRetention) | 0);
+                const retentionTime = (((Date.now() / 1000) - portalConfig.website.stats.historicalRetention) | 0);
 
-                for (var i = 0; i < _this.statHistory.length; i++){
+                for (let i = 0; i < _this.statHistory.length; i++){
                     if (retentionTime < _this.statHistory[i].time){
                         if (i > 0) {
                             _this.statHistory = _this.statHistory.slice(i);
@@ -288,31 +289,50 @@ module.exports = function(logger, portalConfig, poolConfigs){
                         logger.error(logSystem, 'Historics', 'Error adding stats to historics ' + JSON.stringify(err));
                 });
 
-                //console.log("rpc-call: BEFORE");
-                //let poolOptions = poolConfigs["aion"];
-                
                 callback();
             });
         });
 
     };
 
-    var units = [ ' Sol/s', ' KSol/s', ' MSol/s', ' GSol/s', ' TSol/s', ' PSol/s' ];
+    const units = [' Sol/s', ' KSol/s', ' MSol/s', ' GSol/s', ' TSol/s', ' PSol/s'];
 
     this.getRealReadableHashRateString = function(number) {
         // what tier? (determines prefix)
-        var tier = Math.log10(number) / 3 | 0;
+        const tier = Math.log10(number) / 3 | 0;
 
         // get prefix and determine scale
-        var prefix = units[tier];
-        var scale = Math.pow(10, tier * 3);
+        const prefix = units[tier];
+        const scale = Math.pow(10, tier * 3);
 
         // scale the number
-        var scaled = number / scale;
+        const scaled = number / scale;
 
         // format number and add prefix as suffix
         return scaled.toFixed(2) + prefix;
-    }
+    };
+
+    this.getLastMinedBlocks = function(blocks, explorerUrl) {
+        if (!blocks)
+            return [];
+        let parsedBlocks = blocks.map(function(block) {
+            let parsedBlock = block.split(':');
+            let blockObj = {
+                block: parsedBlock[0],
+                height: parsedBlock[2],
+            };
+            if (explorerUrl)
+                blockObj.blockUrl = explorerUrl + '#/block/' + blockObj.height;
+            if (parsedBlock.length > 3)
+                blockObj.worker = parsedBlock[3];
+            return blockObj;
+        });
+        parsedBlocks.sort(function(a, b) {
+            return b.height - a.height;
+        });
+        return parsedBlocks.splice(0, 10);
+
+    };
 
     /*
     this.getReadableHashRateString = function(hashrate) {

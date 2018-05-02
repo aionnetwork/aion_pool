@@ -1,4 +1,4 @@
-const bignum = require('bignum');
+const BigNumber = require('bignumber.js');
 const merkleTree = require('./merkleTree.js');
 const transactions = require('./transactions.js');
 const util = require('./util.js');
@@ -54,8 +54,8 @@ module.exports = function BlockTemplate(jobId,
     this.headerHash = this.rpcData.headerHash;
 
     this.target = rpcData.target ?
-        bignum(rpcData.target, 16) :
-        util.bignumFromBitsHex(rpcData.bits);
+        new BigNumber(rpcData.target, 16) :
+        new BigNumber(0);
 
     this.difficulty = parseFloat((diff1 / this.target.toNumber()).toFixed(9));
 

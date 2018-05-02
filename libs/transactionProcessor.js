@@ -19,6 +19,13 @@ module.exports = function (logger, logSystem, logComponent, magnitude, daemon, p
 
     this.sendTransactionCall = (transactionData, withholdPercent, trySend) => {
         return function (callback) {
+
+            if (transactionData.value === undefined || transactionData.value === 0) {
+                logger.debug("Transaction with 0 value. Not sending it.");
+                callback();
+                return;
+            }
+
             const transactionDetails = {};
             transactionDetails.txHash = -1;
             transactionDetails.to = transactionData.to;

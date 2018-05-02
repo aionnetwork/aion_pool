@@ -1,6 +1,6 @@
 var async  = require('async');
 var net    = require('net');
-var bignum = require('bignum');
+var BigNumber = require('bignumber.js');
 var algos  = require('stratum-pool/lib/algos.js');
 var util   = require('stratum-pool/lib/util.js');
 
@@ -551,8 +551,7 @@ module.exports = function(logger){
             var coinStatus = profitStatus[symbolToAlgorithmMap[symbol]][symbol];
             var response = result[0].response;
 
-            // some shitcoins dont provide target, only bits, so we need to deal with both
-            var target = response.target ? bignum(response.target, 16) : util.bignumFromBitsHex(response.bits);
+            var target = new BigNumber(response.target, 16);
             coinStatus.difficulty = parseFloat((diff1 / target.toNumber()).toFixed(9));
             logger.debug(logSystem, symbol, 'difficulty is ' + coinStatus.difficulty);
 

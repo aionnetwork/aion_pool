@@ -1,7 +1,7 @@
 const events = require('events');
 const crypto = require('crypto');
-const algos = require('./algos.js')
-const bignum = require('bignum');
+const algos = require('./algos.js');
+const BigNumber = require('bignumber.js');
 
 
 const util = require('./util.js');
@@ -9,16 +9,16 @@ const blockTemplate = require('./blockTemplate.js');
 
 
 //Unique extranonce per subscriber
-var ExtraNonceCounter = function(configInstanceId){
+var ExtraNonceCounter = function (configInstanceId) {
 
-    if(typeof configInstanceId == 'undefined' && configInstanceId) {
+    if (typeof configInstanceId == 'undefined' && configInstanceId) {
         configInstanceId = crypto.randomBytes(4).readUInt32LE(0);
     }
 
     var instanceId = configInstanceId || crypto.randomBytes(4).readUInt32LE(0);
     var counter = 0;
 
-    this.next = function(){
+    this.next = function () {
 
         var buff = new Buffer(8);
         buff.writeUInt32BE(instanceId, 0);
@@ -246,61 +246,56 @@ const JobManager = module.exports = function JobManager(options) {
             return shareError([22, 'duplicate share']);
         }
 
-        const extraNonce1Buffer = new Buffer(extraNonce1, 'hex');
-        const extraNonce2Buffer = new Buffer(extraNonce2, 'hex');
-
         const headerBuffer = job.serializeHeader("root", nTime, nonce); // 528 bytes (doesn't contain soln)
         const headerSolnBuffer = new Buffer.concat([headerBuffer, new Buffer(soln.slice(6), 'hex')]);
 
         //Change to Blake2b
-        const headerHash = util.blake2(32, headerSolnBuffer);
-        const headerBigNum = bignum.fromBuffer(headerHash, {endian: 'big', size: 32});
+        let headerHash = util.blake2(32, headerSolnBuffer);
+        // Don't use header big num. TODO: rewrite the shareDiff part (AP-86)
+        // const headerBigNum = bignum.fromBuffer(headerHash, {endian: 'big', size: 32});
 
         let blockHashInvalid;
         let blockHash;
-        let blockHex;
 
-        const shareDiff = blockTemplate.diff1 / headerBigNum.toNumber() * shareMultiplier;
+        // const shareDiff = blockTemplate.diff1 / headerBigNum.toNumber() * shareMultiplier;
+        const shareDiff = NaN;
         const blockDiffAdjusted = job.difficulty * shareMultiplier;
 
         // check if valid Equihash solution
-        if (hashDigest(headerBuffer, new Buffer(soln.slice(6), 'hex')) !== true) {
-            return shareError([20, 'invalid solution']);
-        }
+        // if (hashDigest(headerBuffer, new Buffer(soln.slice(6), 'hex')) !== true) {
+        //     return shareError([20, 'invalid solution']);
+        // }
 
         // check if solution meets target
         const completeHeader = job.serializeHeaderTarget(nonce, soln, nTime);
         const completeHeaderHash = new Buffer(util.blake2(32, completeHeader), 'hex');
 
-        const completeHeaderBigNum = bignum.fromBuffer(completeHeaderHash, {endian: 'big', size: 32});
+        const completeHeaderBigNum = new BigNumber(completeHeaderHash.toString('hex'));
 
         if (completeHeaderBigNum.gt(job.target)) {
             return shareError([20, 'Header hash larger than target']);
         }
 
-        //TODO: Bring this back after share diff adjustment is re-implemented
-        // //check if block candidate
+        //TODO: Bring this back after share diff adjustment is re-implemented (AP-86)
+        //check if block candidate
         // if (headerBigNum.le(job.target)) {
-        //     blockHex = job.serializeBlock(headerBuffer, new Buffer(soln, 'hex')).toString('hex');
-        //     blockHash = util.reverseBuffer(headerHash).toString('hex');
+        //     //nada for now
         // }
         // else {
-        //     if (options.emitInvalidBlockHashes)
-        //         blockHashInvalid = util.reverseBuffer(util.sha256d(headerSolnBuffer)).toString('hex');
+        if (options.emitInvalidBlockHashes)
+            blockHashInvalid = util.reverseBuffer(util.sha256d(headerSolnBuffer)).toString('hex');
 
-        //     //Check if share didn't reached the miner's difficulty)
-        //     if (shareDiff / difficulty < 0.99) {
+        //Check if share didn't reached the miner's difficulty)
+        if (shareDiff / difficulty < 0.99) {
 
-        //         //Check if share matched a previous difficulty from before a vardiff retarget
-        //         if (previousDifficulty && shareDiff >= previousDifficulty) {
-        //             difficulty = previousDifficulty;
-        //         }
-        //         else {
-        //             return shareError([23, 'low difficulty share of ' + shareDiff]);
-        //         }
-
-        //     }
-        // }
+            //Check if share matched a previous difficulty from before a vardiff retarget
+            if (previousDifficulty && shareDiff >= previousDifficulty) {
+                difficulty = previousDifficulty;
+            }
+            else {
+                return shareError([23, 'low difficulty share of ' + shareDiff]);
+            }
+        };
 
         blockHash = util.reverseBuffer(headerHash).toString('hex');
 
@@ -323,6 +318,7 @@ const JobManager = module.exports = function JobManager(options) {
         return {result: true, error: null, blockHash: blockHash};
     };
 
+
     let getBlockReward = function (blockNumber) {
         const blockReward = 1497989283243310185;
         const magnitude = 1000000000000000000;
@@ -339,6 +335,7 @@ const JobManager = module.exports = function JobManager(options) {
         } else {
             return blockReward / magnitude;
         }
-    }
+    };
 };
+
 JobManager.prototype.__proto__ = events.EventEmitter.prototype;

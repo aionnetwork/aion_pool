@@ -6,7 +6,7 @@ const util = require('stratum-pool/lib/util.js');
 const RewardLogger = require('./logging/rewardLogger');
 const TransactionProcessor = require('./transactionProcessor');
 const PaymentChecker = require('./paymentChecker');
-const minersRewardLogger = new RewardLogger('logs/miners_rewards.log');
+const minersRewardLogger = new RewardLogger('logs/miners_rewards');
 
 module.exports = function (logger) {
 
@@ -59,7 +59,7 @@ function SetupForPool(logger, minersRewardLogger, poolOptions, setupFinished) {
 
     let paymentInterval;
     let transactionProcessor = new TransactionProcessor(logger, logSystem, logComponent, magnitude, daemon, poolOptions, minersRewardLogger);
-    let paymentChecker = new PaymentChecker(logger, minersRewardLogger);
+    let paymentChecker = new PaymentChecker(logger);
 
     async.parallel([
         function (callback) {
@@ -166,12 +166,15 @@ function SetupForPool(logger, minersRewardLogger, poolOptions, setupFinished) {
 
                     let rounds = results[1].map(function (r) {
                         let details = r.split(':');
-                        return {
+                        let detailObj = {
                             blockHash: details[0],
                             reward: details[1],
                             height: details[2],
                             serialized: r
                         };
+                        if (details.length > 3)
+                            detailObj.worker = details[3];
+                        return detailObj;
                     });
 
                     // sort rounds by block height to pay in order
@@ -361,7 +364,6 @@ function SetupForPool(logger, minersRewardLogger, poolOptions, setupFinished) {
                     }
 
                     let sendTransactionCalls = [];
-                    let transactionHashes = [];
                     minersRewardLogger.log("Start sending the payments to miners...");
                     for (w in workers) {
                         let worker = workers[w];
@@ -376,7 +378,6 @@ function SetupForPool(logger, minersRewardLogger, poolOptions, setupFinished) {
                             to: w,
                             value: worker.reward
                         };
-                        minersRewardLogger.log('Sending ' + worker.reward / magnitude + " AION to " + w);
                         sendTransactionCalls.push(transactionProcessor.sendTransactionCall(transactionData, withholdPercent, trySend));
                     }
 
@@ -395,12 +396,8 @@ function SetupForPool(logger, minersRewardLogger, poolOptions, setupFinished) {
                                 + ' to ' + Object.keys(transactions).length + ' addresses (including pool\'s)');
                         }
 
-                        transactions.forEach(transaction => {
-                            transactionHashes.push(transaction);
-                        });
-
                         minersRewardLogger.log("Payments were sent...");
-                        callback(null, workers, rounds, transactionHashes);
+                        callback(null, workers, rounds, transactions);
                     });
                 };
 
@@ -436,7 +433,9 @@ function SetupForPool(logger, minersRewardLogger, poolOptions, setupFinished) {
                 let transactionCommands = [];
 
                 transactions.forEach(function (transaction) {
-                    transactionCommands.push(['sadd', coin + ':transactions', [transaction.txHash, transaction.to, transaction.amount].join(':')])
+                    if (transaction) {
+                        transactionCommands.push(['sadd', coin + ':transactions', [transaction.txHash, transaction.to, transaction.amount].join(':')])
+                    }
                 });
 
                 let moveSharesToCurrent = function (r) {
