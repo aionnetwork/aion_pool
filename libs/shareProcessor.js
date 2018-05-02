@@ -88,7 +88,7 @@ module.exports = function (logger, poolConfig) {
             poolRewardLogger.log("Received reward for block #" + shareData.height + ": " + shareData.blockReward + " AION");
 
             redisCommands.push(['rename', coin + ':shares:roundCurrent', coin + ':shares:round' + shareData.height]);
-            redisCommands.push(['sadd', coin + ':blocksPending', [shareData.blockHash, shareData.blockReward, shareData.height, shareData.worker].join(':')]);
+            redisCommands.push(['sadd', coin + ':blocksPending', [shareData.blockHash, shareData.blockReward, shareData.height].join(':')]);
             redisCommands.push(['hincrby', coin + ':stats', 'validBlocks', 1]);
         }
         else if (shareData.blockHash) {
