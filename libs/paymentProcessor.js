@@ -166,12 +166,15 @@ function SetupForPool(logger, minersRewardLogger, poolOptions, setupFinished) {
 
                     let rounds = results[1].map(function (r) {
                         let details = r.split(':');
-                        return {
+                        let detailObj = {
                             blockHash: details[0],
                             reward: details[1],
                             height: details[2],
                             serialized: r
                         };
+                        if (details.length > 3)
+                            detailObj.worker = details[3];
+                        return detailObj;
                     });
 
                     // sort rounds by block height to pay in order

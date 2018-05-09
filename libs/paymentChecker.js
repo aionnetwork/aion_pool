@@ -46,32 +46,33 @@ module.exports = function (logger) {
                 const transactionValidityCalls = transactions.map(checkIfTransactionWasSuccessful);
                 async.parallel(transactionValidityCalls, function (error, transactionsDetails) {
                     const invalidTransactions = transactionsDetails.filter(transactionDetails => !transactionDetails.processed);
+                    const toDelete  = transactionsDetails.filter(transactionDetails => transactionDetails.processed);
                     const sendTransactionCalls = [];
 
                     invalidTransactions.forEach(invalidTransaction => {
                         let transactionData = {
                             from: poolOptions.address,
                             to: invalidTransaction.worker,
-                            value: invalidTransaction.amount
+                            value: invalidTransaction.amount,
+                            previousHash: invalidTransaction.txHash
                         };
-                        paymentsLogger.log('Failed to send ' + invalidTransaction.amount + ' AION to ' + invalidTransaction.worker + '. Retrying...');
+                        paymentsLogger.log('Failed to send ' + invalidTransaction.amount / magnitude + ' AION to ' + invalidTransaction.worker + '. Retrying...');
                         sendTransactionCalls.push(transactionProcessor.sendTransactionCall(transactionData, withholdPercent, trySend));
                     });
 
-                    const failedTransactions = [];
                     async.parallel(sendTransactionCalls, function (err, transactions) {
                         if (err) {
                             logger.debug(logSystem, logComponent, 'Error while unlocking the account - you might want to ' +
                                 'check your password');
                         }
 
+                        const newTransactions = [];
                         transactions.forEach(transaction => {
-                            if (transaction.txHash === "-1") {
-                                failedTransactions.push(transaction);
-                            }
+                            newTransactions.push(transaction);
+                            toDelete.push({txHash: transaction.previousHash, worker: transaction.to, amount: transaction.amount})
                         });
 
-                        updateRedis(failedTransactions);
+                        updateRedis(toDelete, newTransactions);
                     });
                 });
             };
@@ -80,15 +81,27 @@ module.exports = function (logger) {
         })
     };
 
-    let updateRedis = function (failedTransactions) {
-        redisClient.del("aion:transactions", function (result) {
-            const transactionCommands = [];
-            failedTransactions.forEach(transaction => {
-                transactionCommands.push(['sadd', coin + ':transactions', [transaction.txHash, transaction.to, transaction.amount].join(':')])
-            });
+    let updateRedis = function (toDelete, toAdd) {
+        const deleteTransactionCommands = [];
+        const addTransactionCommands = [];
+        toDelete.forEach(transaction => {
+            deleteTransactionCommands.push(['srem', coin + ':transactions', [transaction.txHash, transaction.worker, transaction.amount].join(':')]);
+        });
+        toAdd.forEach(transaction => {
+            addTransactionCommands.push(['sadd', coin + ":transactions", [transaction.txHash, transaction.to, transaction.amount].join(':')])
+        });
 
-            redisClient.multi(transactionCommands).exec();
-        })
+        let finalRedisCommands = [];
+        if (deleteTransactionCommands.length > 0) {
+            finalRedisCommands = finalRedisCommands.concat(deleteTransactionCommands);
+        }
+        if (addTransactionCommands.length > 0) {
+            finalRedisCommands = finalRedisCommands.concat(addTransactionCommands);
+        }
+
+        redisClient.multi(finalRedisCommands).exec(function (error, results) {
+
+        });
     };
 
     let checkIfTransactionWasSuccessful = function (transactionDetails) {
