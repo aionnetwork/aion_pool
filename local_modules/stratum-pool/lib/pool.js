@@ -586,7 +586,8 @@ let pool = module.exports = function pool(options, authorizeFn) {
 
         blockPollingIntervalId = setInterval(function () {
             GetBlockTemplate(function (error, result, foundNewBlock) {
-                if (foundNewBlock)
+
+                if ("New block result: %j", result);
                     emitLog('Block notification via RPC polling');
             });
         }, pollingInterval);
@@ -603,6 +604,9 @@ let pool = module.exports = function pool(options, authorizeFn) {
                     callback(result.error);
                 } else {
                     let processedNewBlock = _this.jobManager.processTemplate(result.response);
+
+                    //console.log("BlockTemplate: %j", result.response);
+
                     callback(null, result.response, processedNewBlock);
                     callback = function () {
                     };

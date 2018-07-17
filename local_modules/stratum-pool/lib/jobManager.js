@@ -262,9 +262,9 @@ const JobManager = module.exports = function JobManager(options) {
         const blockDiffAdjusted = job.difficulty * shareMultiplier;
 
         // check if valid Equihash solution
-        // if (hashDigest(headerBuffer, new Buffer(soln.slice(6), 'hex')) !== true) {
-        //     return shareError([20, 'invalid solution']);
-        // }
+        if (hashDigest(headerBuffer, new Buffer(soln.slice(6), 'hex')) !== true) {
+            return shareError([20, 'invalid solution']);
+        }
 
         // check if solution meets target
         const completeHeader = job.serializeHeaderTarget(nonce, soln, nTime);
@@ -296,6 +296,10 @@ const JobManager = module.exports = function JobManager(options) {
                 return shareError([23, 'low difficulty share of ' + shareDiff]);
             }
         };
+
+        console.log("ShareDiff: " + shareDiff);
+        console.log("Target: " + job.target.toString());
+        console.log("Div" + shareDiff / difficulty < 0.99);
 
         blockHash = util.reverseBuffer(headerHash).toString('hex');
 
