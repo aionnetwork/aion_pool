@@ -30,6 +30,7 @@ module.exports = function (logger, logSystem, logComponent, magnitude, daemon, p
             transactionDetails.txHash = -1;
             transactionDetails.to = transactionData.to;
             transactionDetails.amount = transactionData.value;
+            transactionDetails.previousHash = transactionData.previousHash;
 
             unlockAccountIfNecessary(transactionData.from, poolOptions.addressPassword, function (isUnlocked) {
                 if (isUnlocked) {
